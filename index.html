@@ -492,6 +492,18 @@ td.num,th.num{text-align:right}
   </section>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="load-error" hidden style="position:fixed;inset:auto 12px 12px 12px;z-index:30;background:#e8483b;color:#fff;border:3px solid #17324d;border-radius:16px;padding:14px 16px;font-weight:700"></div>
+<script>
+  // Jika script utama (Firebase) gagal dimuat, tombol tidak berfungsi. Tampilkan penyebabnya.
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      if(!window.__appReady){
+        var b=document.getElementById('load-error'); b.hidden=false;
+        b.textContent='⚠ Aplikasi gagal dimuat. Kemungkinan koneksi internet terputus atau library Firebase diblokir jaringan. Muat ulang halaman, atau coba jaringan lain.';
+      }
+    }, 4000);
+  });
+</script>
 
 <!-- ======================= PEMBACA SOAL ======================= -->
 <script>
@@ -565,7 +577,17 @@ const PALETTE = ['#7bd36b','#ff8a65','#4fc3f7','#ffd54f','#ba68c8','#f06292','#4
 const ulat = (c, size='') => `<div class="ulat ${size}" style="--c:${c||'#7bd36b'}"><i></i><i></i><i></i><i></i><b class="head"><em></em><em></em><u></u></b></div>`;
 const posCss = (p, w=130) => `calc((100% - ${w}px) * ${Math.max(0, Math.min(1, p)).toFixed(4)})`;
 let toastT;
-function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),3200); }
+function fbErr(err){
+  const c = err?.code || '', m = err?.message || String(err);
+  if(c === 'permission-denied' || /insufficient permissions/i.test(m))
+    return 'Akses Firestore ditolak. Buka Firebase Console → Firestore Database → Rules, lalu izinkan read/write untuk koleksi rooms.';
+  if(c === 'not-found' || /database .*does not exist/i.test(m))
+    return 'Database Firestore belum dibuat. Buka Firebase Console → Firestore Database → Create database.';
+  if(c === 'unavailable' || /offline/i.test(m))
+    return 'Tidak bisa terhubung ke Firebase. Periksa koneksi internet.';
+  return m;
+}
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'), msg.length>80 ? 9000 : 3200); }
 
 const SAMPLE = `1. Apa kepanjangan dari PLN?
 A. Perusahaan Listrik Negara
@@ -790,7 +812,7 @@ async function createRoom(){
     $('#lobby-title').textContent = S.title;
     $('#join-url').textContent = location.protocol.startsWith('http') ? location.origin + location.pathname : '';
     renderLobby(); show('s-host-lobby');
-  }catch(err){ console.error(err); toast('Gagal membuat ruangan: ' + err.message); }
+  }catch(err){ console.error(err); toast('Gagal membuat ruangan: ' + fbErr(err)); }
   finally{ btn.disabled = false; btn.textContent = 'Buat ruangan'; }
 }
 
@@ -820,7 +842,7 @@ async function startQuestion(i){
   const q = S.game[i];
   try{
     await setDoc(roomRef(), { status: 'question', qIndex: i, q: { text: q.text, options: q.options }, duration: S.time, dist: null }, { merge: true });
-  }catch(err){ toast('Gagal mengirim soal: ' + err.message); return; }
+  }catch(err){ toast('Gagal mengirim soal: ' + fbErr(err)); return; }
   if(H.ansUnsub) H.ansUnsub();
   H.ansUnsub = onSnapshot(collection(db, 'rooms', S.pin, 'rounds', String(i), 'answers'), snap => {
     H.answers = {}; snap.forEach(d => H.answers[d.id] = d.data());
@@ -899,7 +921,7 @@ async function reveal(){
   try{
     await batch.commit();
     await setDoc(roomRef(), { status: 'reveal', dist }, { merge: true });
-  }catch(err){ toast('Gagal menyimpan skor: ' + err.message); }
+  }catch(err){ toast('Gagal menyimpan skor: ' + fbErr(err)); }
   const sec = $('#s-host-q'); sec.classList.add('revealed');
   dist.forEach((n, i) => { const c = sec.querySelector(`[data-cnt="${i}"]`); if(c) c.textContent = `${n} orang`; });
   $('#hq-sec').textContent = '0';
@@ -1012,7 +1034,7 @@ async function joinRoom(){
       if(current === 's-p-wait' && P.room?.status === 'lobby') renderWait('lobby');
     }));
     renderWait('lobby'); show('s-p-wait');
-  }catch(err){ toast(err.message); }
+  }catch(err){ toast(fbErr(err)); }
   finally{ btn.disabled = false; btn.textContent = 'Gabung'; }
 }
 
@@ -1084,7 +1106,7 @@ $('#pp-opts').addEventListener('click', async e => {
   renderWait('sent'); show('s-p-wait');
   try{
     await setDoc(doc(db, 'rooms', S.pin, 'rounds', String(qi), 'answers', P.id), { choice: P.choice, ms, nama: P.name });
-  }catch(err){ toast('Jawaban gagal terkirim: ' + err.message); }
+  }catch(err){ toast('Jawaban gagal terkirim: ' + fbErr(err)); }
 });
 
 function myRank(){ const i = P.all.findIndex(p => p.id === P.id); return i < 0 ? '-' : i + 1; }
@@ -1105,6 +1127,8 @@ function renderFeedback(){
     <div class="mini-track"><span class="leaf">🍃</span><div class="runner" style="left:${posCss(prog * .92, 90)}">${ulat(P.color, 'sm')}</div></div>
     <div class="stat-row"><span class="stat">Peringkat ${myRank()} dari ${P.all.length}</span><span class="stat">${me.score || 0} poin</span></div>`;
 }
+
+window.__appReady = true;
 
 function renderEnd(){
   const me = P.me || {}, r = myRank();
