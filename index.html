@@ -183,7 +183,7 @@ textarea{width:100%;margin-top:10px;border:2px solid var(--ink);border-radius:12
 .center{display:flex;justify-content:center}
 
 /* ---------- Soal di layar host ---------- */
-.q-wrap{display:grid;gap:16px;flex:1}
+.q-wrap{display:grid;gap:16px;flex:1;align-content:start}
 .q-top{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
 .q-text{font-family:var(--display);font-size:clamp(24px,3.6vw,42px);line-height:1.15;background:var(--paper);border:var(--line);box-shadow:var(--pop);border-radius:22px;padding:22px 24px}
 .timer{position:relative;width:110px;height:110px}
@@ -214,7 +214,7 @@ textarea{width:100%;margin-top:10px;border:2px solid var(--ink);border-radius:12
 .keybox{display:none;background:var(--ink);color:#fff;border-radius:16px;padding:12px 16px;font-weight:700}
 .keybox b{color:var(--yellow)}
 .show-key .keybox{display:block}
-.q-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.q-actions{display:flex;justify-content:flex-end;align-items:center;gap:12px;flex-wrap:wrap}
 @media (max-width:640px){.opts{grid-template-columns:1fr}.q-top{grid-template-columns:1fr;justify-items:center}}
 
 /* ---------- Arena balapan ---------- */
@@ -286,6 +286,39 @@ td.num,th.num{text-align:right}
 .fb-title{font-family:var(--display);font-size:40px}
 .mini-track{width:100%;max-width:420px;height:58px;position:relative;border-radius:12px;border:2px solid var(--ink);background:linear-gradient(180deg,var(--soil),var(--soil-d));overflow:hidden}
 .mini-track .runner{bottom:4px}
+/* mode balapan */
+.track-wrap{position:relative}
+.race-count{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:5;
+  font-family:var(--display);font-size:clamp(70px,14vw,150px);font-weight:800;color:var(--yellow);
+  -webkit-text-stroke:4px var(--ink);text-shadow:6px 6px 0 var(--ink)}
+.race-count.zoom{animation:zoom .55s ease-out}
+@keyframes zoom{from{transform:scale(2.2);opacity:0}40%{opacity:1}to{transform:scale(1)}}
+.track .road{height:92px}
+.track .ulat{--s:22px}
+.track .runner{transition:none;bottom:8px}
+.track .runner .tag{font-size:15px;padding:1px 10px;margin-bottom:2px;max-width:165px}
+.crown-mini{display:none;margin-right:4px}
+.lane.lead .crown-mini{display:inline}
+.gain,.fire{display:none}
+.lane.done .gain{display:inline-block;animation:pop .35s ease}
+.lane.done .fire{display:inline}
+.dust{position:absolute;left:-12px;bottom:8px;width:9px;height:9px;border-radius:50%;opacity:0;
+  background:rgba(255,255,255,.6);box-shadow:-11px 5px 0 -1px rgba(255,255,255,.45),-20px -1px 0 -2px rgba(255,255,255,.3)}
+.moving .dust{animation:puff .35s linear infinite}
+@keyframes puff{0%{opacity:.9;transform:translateX(0)}100%{opacity:0;transform:translateX(-12px)}}
+.racing .moving .ulat i,.racing .moving .ulat .head{animation-duration:.3s}
+.rank.bump{animation:pop .3s ease}
+.race-actions{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap}
+/* kontrol otomatis & jeda */
+.auto-status{font-weight:800;background:#fff;border:2px solid var(--ink);border-radius:999px;padding:8px 16px}
+.auto-status:empty{display:none}
+body.is-paused .btn-pause{background:var(--grass)}
+.pause-veil{position:fixed;inset:0;z-index:40;display:none;place-items:center;background:rgba(23,50,77,.35);pointer-events:none}
+body.is-paused .pause-veil{display:grid}
+.pause-card{font-family:var(--display);font-size:clamp(30px,6vw,56px);background:var(--yellow);border:var(--line);box-shadow:var(--pop);border-radius:24px;padding:14px 30px;text-align:center}
+body.host-mode .pause-card small{display:none}
+.pause-card small{display:block;font-family:var(--body);font-size:16px;font-weight:700}
+body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
 .mini-track .leaf{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:26px}
 .stat-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .stat{background:#f3f8fc;border:2px solid var(--ink);border-radius:14px;padding:6px 14px;font-weight:800}
@@ -377,8 +410,8 @@ td.num,th.num{text-align:right}
         </label>
         <label class="field">Waktu per soal
           <select id="set-time">
-            <option value="10">10 detik</option><option value="15">15 detik</option>
-            <option value="20" selected>20 detik</option><option value="30">30 detik</option>
+            <option value="10">10 detik</option><option value="15" selected>15 detik</option>
+            <option value="20">20 detik</option><option value="30">30 detik</option>
             <option value="45">45 detik</option><option value="60">60 detik</option>
           </select>
         </label>
@@ -413,7 +446,7 @@ td.num,th.num{text-align:right}
   <!-- ============ SOAL (HOST) ============ -->
   <section id="s-host-q" class="screen show-key">
     <header class="bar">
-      <button class="back" data-back>✕ Akhiri</button>
+      <button class="back" data-back>← Kembali</button>
       <h2>Soal <span id="hq-num"></span></h2>
       <button class="ghost right" id="btn-toggle-key">🙈 Sembunyikan kunci</button>
     </header>
@@ -430,15 +463,21 @@ td.num,th.num{text-align:right}
       </div>
       <div class="opts" id="hq-opts"></div>
       <div class="keybox" id="hq-key">🔑 Kunci jawaban (hanya terlihat di layar host): <b></b></div>
-      <div class="q-actions"><button class="cta" id="btn-close-q">Tutup soal & tampilkan jawaban</button></div>
+      <div class="q-actions"><span class="auto-status"></span><button class="cta btn-pause">⏸ Jeda</button></div>
     </div>
   </section>
 
   <!-- ============ BALAPAN (HOST) ============ -->
   <section id="s-host-race" class="screen">
-    <header class="bar"><button class="back" data-back>✕ Akhiri</button><h2>Balapan Ulat</h2><span class="right muted" id="race-progress"></span></header>
-    <div class="track" id="race-track"></div>
-    <div class="center"><button class="cta" id="btn-next">Soal berikutnya</button></div>
+    <header class="bar"><button class="back" data-back>← Kembali</button><h2>Balapan Ulat</h2><span class="right muted" id="race-progress"></span></header>
+    <div class="track-wrap">
+      <div class="track" id="race-track"></div>
+      <div class="race-count" id="race-count" hidden></div>
+    </div>
+    <div class="race-actions">
+      <span class="auto-status"></span>
+      <button class="cta btn-pause">⏸ Jeda</button>
+    </div>
   </section>
 
   <!-- ============ JUARA (HOST) ============ -->
@@ -492,6 +531,7 @@ td.num,th.num{text-align:right}
   </section>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
+<div class="pause-veil" aria-hidden="true"><div class="pause-card">⏸ Lomba dijeda<small>Menunggu host melanjutkan</small></div></div>
 <div id="load-error" hidden style="position:fixed;inset:auto 12px 12px 12px;z-index:30;background:#e8483b;color:#fff;border:3px solid #17324d;border-radius:16px;padding:14px 16px;font-weight:700"></div>
 <script>
   // Jika script utama (Firebase) gagal dimuat, tombol tidak berfungsi. Tampilkan penyebabnya.
@@ -573,7 +613,9 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LETTERS = 'ABCDE';
 const SHAPES = ['▲','◆','●','■','★'];
-const PALETTE = ['#7bd36b','#ff8a65','#4fc3f7','#ffd54f','#ba68c8','#f06292','#4db6ac','#9ccc65','#ffb74d','#7986cb','#e57373','#4dd0e1'];
+// 12 warna yang jelas berbeda; peserta ke-13 dst. memakai rona otomatis yang tetap berjauhan
+const PALETTE = ['#ef5350','#ff9800','#ffd600','#c0dd3a','#43c35e','#26a69a','#29c5f6','#3f7fe0','#7e57c2','#c25ad1','#f06292','#a1724e'];
+const shuffle = a => { for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const ulat = (c, size='') => `<div class="ulat ${size}" style="--c:${c||'#7bd36b'}"><i></i><i></i><i></i><i></i><b class="head"><em></em><em></em><u></u></b></div>`;
 const posCss = (p, w=130) => `calc((100% - ${w}px) * ${Math.max(0, Math.min(1, p)).toFixed(4)})`;
 let toastT;
@@ -628,7 +670,19 @@ $('#join-ulat').innerHTML = ulat('#7bd36b','lg');
 
 /* ---------- State ---------- */
 const S = { questions:[], game:[], time:20, title:'', pin:'', unsubs:[] };
-const H = { players:{}, qi:-1, answers:{}, revealed:false, showKey:true, timer:null, deadline:0, ansUnsub:null, prev:{} };
+const H = { players:{}, qi:-1, answers:{}, revealed:false, showKey:true, timer:null, deadline:0, ansUnsub:null, prev:{},
+  prevScore:{}, colorOf:{}, order:{}, nextColor:0, palette:shuffle([...PALETTE]), hueOff:0, race:[], raceAll:[], raf:0, raceTimers:[] };
+const colorFor = i => i < H.palette.length ? H.palette[i] : `hsl(${Math.round((H.hueOff + i * 137.508) % 360)} 72% 58%)`;
+const pc = id => H.colorOf[id] || H.players[id]?.color;
+function assignColors(p){
+  Object.values(p).filter(pl => H.colorOf[pl.id] === undefined)
+    .sort((a, b) => (a.joinedAt?.seconds ?? 9e12) - (b.joinedAt?.seconds ?? 9e12))
+    .forEach(pl => { const i = H.nextColor++; H.order[pl.id] = i; H.colorOf[pl.id] = colorFor(i); });
+  Object.values(p).forEach(pl => {
+    const c = H.colorOf[pl.id];
+    if(pl.color !== c){ pl.color = c; setDoc(doc(db, 'rooms', S.pin, 'players', pl.id), { color: c }, { merge: true }).catch(() => {}); }
+  });
+}
 const P = { id:'', name:'', color:'', room:null, me:null, all:[], lastQ:-1, recv:0, answered:false, choice:-1, timer:null, leaving:false };
 const roomRef = () => doc(db, 'rooms', S.pin);
 
@@ -657,8 +711,11 @@ function handleBack(){
     case 's-help': case 's-join': case 's-host-setup': show('s-home'); break;
     case 's-host-lobby':
       if(confirm('Tutup ruangan? Semua peserta akan dikeluarkan.')){ closeRoom(); show('s-host-setup'); } break;
-    case 's-host-q': case 's-host-race':
-      if(confirm('Akhiri lomba sekarang? Nilai sampai soal terakhir yang sudah dinilai akan menjadi hasil akhir.')) finishGame(); break;
+    case 's-host-q': case 's-host-race': {
+      const was = H.paused; if(!was) setPaused(true);
+      if(confirm('Kembali dan akhiri lomba? Juara ditentukan dari nilai sampai soal terakhir yang sudah dinilai.\n\nPilih Batal untuk melanjutkan lomba.')) finishGame();
+      else if(!was) setPaused(false);
+      break; }
     case 's-host-end':
       if(confirm('Kembali ke menu utama? Pastikan nilai sudah diunduh.')){ cleanup(); show('s-home'); } break;
     case 's-p-wait': case 's-p-play': case 's-p-feedback':
@@ -670,7 +727,9 @@ function handleBack(){
 function cleanup(){
   S.unsubs.forEach(u => { try{ u(); }catch{} }); S.unsubs = [];
   if(H.ansUnsub){ H.ansUnsub(); H.ansUnsub = null; }
-  clearInterval(H.timer); clearInterval(P.timer);
+  phaseStop(); cancelAnimationFrame(H.raf); clearInterval(P.timer);
+  H.paused = false; document.body.classList.remove('is-paused');
+  document.querySelectorAll('.btn-pause').forEach(b => b.textContent = '⏸ Jeda');
 }
 
 /* ======================= HOST: SIAPKAN SOAL ======================= */
@@ -800,12 +859,14 @@ async function createRoom(){
       pin = String(Math.floor(1000 + Math.random() * 9000));
       if(!(await getDoc(doc(db, 'rooms', pin))).exists()) break;
     }
-    S.pin = pin;
+    S.pin = pin; document.body.classList.add('host-mode');
     // Hanya info umum yang disimpan di server. Kunci jawaban tetap di perangkat host.
     await setDoc(roomRef(), { status: 'lobby', title: S.title, total: S.game.length, duration: S.time, qIndex: -1, createdAt: serverTimestamp() });
-    H.players = {}; H.prev = {}; H.qi = -1;
+    H.players = {}; H.prev = {}; H.prevScore = {}; H.qi = -1;
+    H.colorOf = {}; H.order = {}; H.nextColor = 0; H.palette = shuffle([...PALETTE]); H.hueOff = Math.random() * 360;
     S.unsubs.push(onSnapshot(collection(db, 'rooms', pin, 'players'), snap => {
       const p = {}; snap.forEach(d => p[d.id] = { id: d.id, ...d.data() });
+      assignColors(p);
       H.players = p; renderLobby(); if(current === 's-host-q') updateAnswered();
     }));
     $('#display-pin').textContent = pin;
@@ -819,7 +880,7 @@ async function createRoom(){
 function renderLobby(){
   const list = Object.values(H.players).sort((a, b) => (a.joinedAt?.seconds || 0) - (b.joinedAt?.seconds || 0));
   $('#player-count').textContent = list.length;
-  $('#lobby-players').innerHTML = list.map(p => `<button class="chip" data-kick="${p.id}" title="Keluarkan ${esc(p.nama)}">${ulat(p.color, 'sm')}${esc(p.nama)}</button>`).join('');
+  $('#lobby-players').innerHTML = list.map(p => `<button class="chip" data-kick="${p.id}" title="Keluarkan ${esc(p.nama)}">${ulat(pc(p.id), 'sm')}${esc(p.nama)}</button>`).join('');
   $('#lobby-empty').textContent = list.length ? 'Ketuk nama peserta untuk mengeluarkannya.' : 'Belum ada peserta. Bagikan PIN di atas.';
   $('#btn-start-game').disabled = !list.length;
 }
@@ -837,11 +898,64 @@ async function closeRoom(){
 /* ======================= HOST: JALANNYA LOMBA ======================= */
 $('#btn-start-game').addEventListener('click', () => startQuestion(0));
 
+/* Alur otomatis: soal → jawaban (4 dtk) → balapan → jeda 3,5 dtk → soal berikutnya.
+   Host hanya punya Jeda / Lanjut dan Kembali. */
+const REVEAL_MS = 4000, AFTER_RACE_MS = 3500;
+const clock = { name: '', end: 0, left: 0, fn: null, iv: null };
+function phaseStart(name, ms, fn){
+  clearInterval(clock.iv);
+  Object.assign(clock, { name, fn, left: ms, end: performance.now() + ms });
+  clock.iv = setInterval(phaseTick, 100); phaseTick();
+}
+function phaseStop(){ clearInterval(clock.iv); clock.iv = null; clock.fn = null; clock.name = ''; }
+function phaseLeft(){ return H.paused ? clock.left : Math.max(0, clock.end - performance.now()); }
+function phaseTick(){
+  if(!clock.fn) return;
+  const left = phaseLeft();
+  if(clock.name === 'question') drawQTimer(left - 1000);   // 1 dtk cadangan untuk jawaban yang masih di jalan
+  setAutoStatus();
+  if(!H.paused && left <= 0){ const f = clock.fn; phaseStop(); f(); }
+}
+function drawQTimer(rem){
+  const dur = S.time * 1000, C = 2 * Math.PI * 44, ring = $('#hq-ring');
+  rem = Math.max(0, Math.min(dur, rem));
+  $('#hq-sec').textContent = Math.ceil(rem / 1000);
+  ring.style.strokeDasharray = C; ring.style.strokeDashoffset = C * (1 - rem / dur);
+  $('#hq-timer').classList.toggle('hurry', rem <= 5000);
+}
+function setAutoStatus(){
+  const s = Math.ceil(phaseLeft() / 1000), last = H.qi + 1 >= S.game.length;
+  let txt = '';
+  if(H.paused) txt = '⏸ Lomba dijeda';
+  else if(clock.name === 'question') txt = 'Jawaban tampil otomatis saat waktu habis';
+  else if(clock.name === 'reveal') txt = `🐛 Balapan dimulai dalam ${s} dtk`;
+  else if(clock.name === 'afterRace') txt = last ? `🏆 Juara diumumkan dalam ${s} dtk` : `Soal berikutnya dalam ${s} dtk`;
+  else if(current === 's-host-race') txt = '🏁 Balapan berlangsung';
+  document.querySelectorAll('.auto-status').forEach(e => e.textContent = txt);
+}
+function setPaused(v){
+  if(H.paused === v) return;
+  if(v) clock.left = Math.max(0, clock.end - performance.now());
+  else clock.end = performance.now() + clock.left;
+  H.paused = v;
+  document.body.classList.toggle('is-paused', v);
+  document.querySelectorAll('.btn-pause').forEach(b => b.textContent = v ? '▶ Lanjut' : '⏸ Jeda');
+  setAutoStatus();
+  H.pauseSeq = (H.pauseSeq || 0) + 1;
+  const remaining = clock.name === 'question' ? Math.max(0, Math.round(clock.left - 1000)) : null;
+  setDoc(roomRef(), { paused: v, remaining, pauseSeq: H.pauseSeq }, { merge: true }).catch(() => {});
+}
+document.addEventListener('click', e => { if(e.target.closest('.btn-pause')) setPaused(!H.paused); });
+function nextStep(){
+  cancelRace(true);
+  if(H.qi + 1 >= S.game.length) finishGame(); else startQuestion(H.qi + 1);
+}
+
 async function startQuestion(i){
   H.qi = i; H.revealed = false; H.answers = {};
   const q = S.game[i];
   try{
-    await setDoc(roomRef(), { status: 'question', qIndex: i, q: { text: q.text, options: q.options }, duration: S.time, dist: null }, { merge: true });
+    await setDoc(roomRef(), { status: 'question', qIndex: i, q: { text: q.text, options: q.options }, duration: S.time, dist: null, paused: false }, { merge: true });
   }catch(err){ toast('Gagal mengirim soal: ' + fbErr(err)); return; }
   if(H.ansUnsub) H.ansUnsub();
   H.ansUnsub = onSnapshot(collection(db, 'rooms', S.pin, 'rounds', String(i), 'answers'), snap => {
@@ -850,7 +964,8 @@ async function startQuestion(i){
     const n = Object.keys(H.players).length;
     if(n && Object.keys(H.answers).filter(id => H.players[id]).length >= n) reveal();
   });
-  renderHostQ(); startHostTimer(); show('s-host-q');
+  renderHostQ(); show('s-host-q');
+  phaseStart('question', S.time * 1000 + 1000, reveal);
 }
 
 function renderHostQ(){
@@ -864,7 +979,6 @@ function renderHostQ(){
     </div>`).join('');
   $('#hq-key b').textContent = `${LETTERS[q.answer]}. ${q.options[q.answer]}`;
   sec.classList.remove('revealed'); sec.classList.toggle('show-key', H.showKey);
-  $('#btn-close-q').textContent = 'Tutup soal & tampilkan jawaban';
   updateAnswered();
 }
 function updateAnswered(){
@@ -878,27 +992,9 @@ $('#btn-toggle-key').addEventListener('click', () => {
   $('#btn-toggle-key').textContent = H.showKey ? '🙈 Sembunyikan kunci' : '🔑 Tampilkan kunci';
 });
 
-function startHostTimer(){
-  clearInterval(H.timer);
-  const dur = S.time * 1000, C = 2 * Math.PI * 44, ring = $('#hq-ring');
-  ring.style.strokeDasharray = C;
-  const end = Date.now() + dur;
-  const tick = () => {
-    const rem = Math.max(0, end - Date.now());
-    $('#hq-sec').textContent = Math.ceil(rem / 1000);
-    ring.style.strokeDashoffset = C * (1 - rem / dur);
-    $('#hq-timer').classList.toggle('hurry', rem <= 5000);
-    // tambahan 1 detik untuk jawaban yang masih di jalan
-    if(Date.now() >= end + 1000) reveal();
-  };
-  tick(); H.timer = setInterval(tick, 200);
-}
-
-$('#btn-close-q').addEventListener('click', () => { if(!H.revealed) reveal(); else showRace(); });
-
 async function reveal(){
   if(H.revealed) return; H.revealed = true;
-  clearInterval(H.timer);
+  phaseStop();
   if(H.ansUnsub){ H.ansUnsub(); H.ansUnsub = null; }
   const q = S.game[H.qi], dur = S.time * 1000, dist = q.options.map(() => 0);
   const batch = writeBatch(db);
@@ -924,52 +1020,137 @@ async function reveal(){
   }catch(err){ toast('Gagal menyimpan skor: ' + fbErr(err)); }
   const sec = $('#s-host-q'); sec.classList.add('revealed');
   dist.forEach((n, i) => { const c = sec.querySelector(`[data-cnt="${i}"]`); if(c) c.textContent = `${n} orang`; });
-  $('#hq-sec').textContent = '0';
-  $('#btn-close-q').textContent = 'Lihat balapan ulat 🐛';
+  drawQTimer(0);
+  phaseStart('reveal', REVEAL_MS, showRace);
 }
+
+const RACE_MS = 5000, RW = 170;
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function showRace(){
-  const list = Object.values(H.players).sort((a, b) => (b.score || 0) - (a.score || 0));
-  const lead = list[0]?.score || 0, frac = (H.qi + 1) / S.game.length;
-  const shown = list.slice(0, 12), track = $('#race-track');
-  track.innerHTML = shown.length ? shown.map((p, r) => `
-    <div class="lane">
-      <div class="rank r${r + 1}">${r + 1}</div>
+  cancelRace(false);
+  const all = Object.values(H.players);
+  const lead = all.reduce((m, p) => Math.max(m, p.score || 0), 0);
+  const frac = (H.qi + 1) / S.game.length;
+  const target = p => lead > 0 ? frac * (p.score || 0) / lead : 0;
+  H.raceAll = all.map(p => ({ id: p.id, to: target(p), s1: p.score || 0 }));
+  // 12 teratas ditampilkan; urutan lintasan tetap (urutan masuk) supaya penonton mudah mengikuti ulatnya
+  const shown = [...all].sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 12)
+    .sort((a, b) => (H.order[a.id] ?? 999) - (H.order[b.id] ?? 999));
+  H.race = shown.map(p => ({ id: p.id, p, from: H.prev[p.id] || 0, to: target(p), s0: H.prevScore[p.id] || 0, s1: p.score || 0 }));
+  const track = $('#race-track');
+  track.innerHTML = H.race.length ? H.race.map(r => `
+    <div class="lane" data-id="${r.id}">
+      <div class="rank">–</div>
       <div class="road"><span class="finish"></span><span class="leaf">🍃</span>
-        <div class="runner" data-id="${p.id}" style="left:${posCss(H.prev[p.id] || 0)}">
-          <span class="tag">${esc(p.nama)}${p.lastCorrect ? ` <em>+${p.lastPoints}</em>` : ''}${(p.streak || 0) >= 2 ? ' 🔥' : ''}</span>${ulat(p.color)}
+        <div class="runner" style="left:${posCss(r.from, RW)}">
+          <span class="tag"><b class="crown-mini">👑</b>${esc(r.p.nama)}${r.p.lastCorrect ? ` <em class="gain">+${r.p.lastPoints}</em>` : ''}${(r.p.streak || 0) >= 2 ? ' <em class="fire">🔥</em>' : ''}</span>
+          <span class="dust"></span>${ulat(pc(r.id))}
         </div>
       </div>
-      <div class="sc">${p.score || 0}</div>
-    </div>`).join('') + (list.length > 12 ? `<p class="more">+${list.length - 12} peserta lainnya</p>` : '')
+      <div class="sc">${r.s0}</div>
+    </div>`).join('') + (all.length > 12 ? `<p class="more">+${all.length - 12} peserta lainnya</p>` : '')
     : '<p class="more">Belum ada peserta.</p>';
-  // ulat merangkak dari posisi sebelumnya ke posisi baru
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    shown.forEach(p => {
-      const prog = lead > 0 ? frac * (p.score || 0) / lead : 0;
-      const el = track.querySelector(`.runner[data-id="${p.id}"]`);
-      if(el) el.style.left = posCss(prog);
-      H.prev[p.id] = prog;
-    });
-  }));
+  H.race.forEach(r => {
+    r.el = track.querySelector(`.lane[data-id="${r.id}"]`);
+    r.runner = r.el.querySelector('.runner'); r.rankEl = r.el.querySelector('.rank'); r.scEl = r.el.querySelector('.sc');
+  });
   $('#race-progress').textContent = `Soal ${H.qi + 1}/${S.game.length}`;
-  $('#btn-next').textContent = H.qi + 1 >= S.game.length ? 'Lihat juara 🏆' : 'Soal berikutnya';
   show('s-host-race');
+  runRace();
 }
-$('#btn-next').addEventListener('click', () => {
-  if(H.qi + 1 >= S.game.length) finishGame(); else startQuestion(H.qi + 1);
-});
 
+// Profil kecepatan acak: tiap ulat kadang ngebut, kadang melambat, jadi saling salip
+function speedCurve(){
+  const n = 7, cum = [0];
+  for(let i = 0; i < n; i++) cum.push(cum[i] + 0.2 + Math.random() * 1.8);
+  return cum.map(v => v / cum[n]);
+}
+function along(cum, t){
+  const n = cum.length - 1, x = t * n, i = Math.min(n - 1, Math.floor(x));
+  return cum[i] + (cum[i + 1] - cum[i]) * (x - i);
+}
+
+function runRace(){
+  cancelRace(false);
+  const track = $('#race-track'), cd = $('#race-count');
+  H.race.forEach(r => {
+    r.cum = speedCurve(); r.cur = r.from;
+    r.runner.style.left = posCss(r.from, RW); r.scEl.textContent = r.s0;
+    r.el.classList.remove('done', 'lead'); r.rankEl.textContent = '–'; r.rankEl.className = 'rank';
+  });
+  if(!H.race.length || reduceMotion){ endRace(); return; }
+  const steps = ['3', '2', '1', 'Gas!'], gap = 600, lead = steps.length * gap;
+  let el = 0, last = null, shownStep = -1, lastRank = 0;
+  const frame = now => {
+    if(last !== null && !H.paused) el += now - last;   // waktu berhenti saat dijeda
+    last = now;
+    if(el < lead){
+      const k = Math.floor(el / gap);
+      if(k !== shownStep){
+        shownStep = k; cd.hidden = false; cd.textContent = steps[k];
+        cd.classList.remove('zoom'); void cd.offsetWidth; cd.classList.add('zoom');
+      }
+    } else {
+      if(!cd.hidden){ cd.hidden = true; track.classList.add('racing'); }
+      const t = Math.min(1, (el - lead) / RACE_MS);
+      const e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      H.race.forEach(r => {
+        const g = along(r.cum, e);
+        r.cur = r.from + (r.to - r.from) * g;
+        r.runner.style.left = posCss(r.cur, RW);
+        r.scEl.textContent = Math.round(r.s0 + (r.s1 - r.s0) * g);
+        r.runner.classList.toggle('moving', r.to > r.from + 1e-4 && t < 1);
+      });
+      if(now - lastRank > 150){ lastRank = now; liveRanks(false); }
+      if(t >= 1){ endRace(); return; }
+    }
+    H.raf = requestAnimationFrame(frame);
+  };
+  H.raf = requestAnimationFrame(frame);
+  setAutoStatus();
+}
+
+function liveRanks(final){
+  const order = [...H.race].sort((a, b) => final ? b.s1 - a.s1 : b.cur - a.cur);
+  order.forEach((r, i) => {
+    const n = String(i + 1);
+    if(r.rankEl.textContent !== n){
+      r.rankEl.textContent = n; r.rankEl.className = 'rank'; void r.rankEl.offsetWidth;
+      r.rankEl.className = 'rank bump' + (i < 3 ? ' r' + n : '');
+    }
+    r.el.classList.toggle('lead', i === 0 && (final ? r.s1 > 0 : r.cur > 0.001));
+  });
+}
+
+function endRace(){
+  cancelRace(true);
+  $('#race-count').hidden = true;
+  $('#race-track').classList.remove('racing');
+  H.race.forEach(r => {
+    r.cur = r.to; r.runner.style.left = posCss(r.to, RW); r.scEl.textContent = r.s1;
+    r.runner.classList.remove('moving'); r.el.classList.add('done');
+  });
+  liveRanks(true);
+  phaseStart('afterRace', AFTER_RACE_MS, nextStep);
+}
+
+function cancelRace(commit){
+  cancelAnimationFrame(H.raf); H.raceTimers.forEach(clearTimeout); H.raceTimers = [];
+  if(commit) H.raceAll.forEach(r => { H.prev[r.id] = r.to; H.prevScore[r.id] = r.s1; });
+}
 async function finishGame(){
-  clearInterval(H.timer);
+  cancelRace(true);
+  phaseStop();
+  if(H.paused){ H.paused = false; document.body.classList.remove('is-paused'); document.querySelectorAll('.btn-pause').forEach(b => b.textContent = '⏸ Jeda'); }
   if(H.ansUnsub){ H.ansUnsub(); H.ansUnsub = null; }
-  try{ await setDoc(roomRef(), { status: 'finished' }, { merge: true }); }catch{}
+  try{ await setDoc(roomRef(), { status: 'finished', paused: false }, { merge: true }); }catch{}
   renderPodium(); show('s-host-end');
 }
 const ranking = () => Object.values(H.players).sort((a, b) => (b.score || 0) - (a.score || 0));
 function renderPodium(){
   const list = ranking();
-  const step = (p, n) => p ? `<div class="step p${n}">${n === 1 ? '<span class="crown">👑</span>' : ''}${ulat(p.color, n === 1 ? 'xl' : 'lg')}
+  const step = (p, n) => p ? `<div class="step p${n}">${n === 1 ? '<span class="crown">👑</span>' : ''}${ulat(pc(p.id), n === 1 ? 'xl' : 'lg')}
       <span class="nm">${esc(p.nama)}</span><span class="pts">${p.score || 0} poin</span><div class="blk">${n}</div></div>` : '<div></div>';
   $('#podium').innerHTML = step(list[1], 2) + step(list[0], 1) + step(list[2], 3);
   $('#final-table').innerHTML = `<tr><th>#</th><th>Nama</th><th class="num">Benar</th><th class="num">Skor</th></tr>` +
@@ -1016,7 +1197,7 @@ async function joinRoom(){
     const snap = await getDoc(doc(db, 'rooms', pin));
     if(!snap.exists() || ['closed','finished'].includes(snap.data().status)) throw new Error('PIN tidak ditemukan atau lomba sudah selesai.');
     try{ localStorage.setItem('balapUlatNama', name); }catch{}
-    S.pin = pin; P.name = name; P.leaving = false; P.lastQ = -1; P.me = null; P.all = [];
+    S.pin = pin; P.name = name; document.body.classList.remove('host-mode'); P.leaving = false; P.lastQ = -1; P.me = null; P.all = [];
     P.id = 'p' + Math.random().toString(36).slice(2, 10);
     P.color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
     await setDoc(doc(db, 'rooms', pin, 'players', P.id), { nama: name, color: P.color, score: 0, benar: 0, streak: 0, joinedAt: serverTimestamp() });
@@ -1026,7 +1207,9 @@ async function joinRoom(){
         if(!P.leaving && P.room && P.room.status !== 'finished'){ cleanup(); toast('Kamu dikeluarkan dari ruangan oleh host.'); show('s-home'); }
         return;
       }
-      P.me = s.data(); if(current === 's-p-feedback') renderFeedback();
+      P.me = s.data();
+      if(P.me.color && P.me.color !== P.color){ P.color = P.me.color; if(current === 's-p-wait' && P.room?.status === 'lobby') renderWait('lobby'); }
+      if(current === 's-p-feedback') renderFeedback();
     }));
     S.unsubs.push(onSnapshot(collection(db, 'rooms', pin, 'players'), s => {
       P.all = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -1051,11 +1234,16 @@ function onRoom(d){
     if(!P.leaving){ cleanup(); toast('Ruangan sudah ditutup host.'); show('s-home'); }
     return;
   }
+  document.body.classList.toggle('is-paused', !!d.paused && d.status !== 'finished');
   if(d.status === 'lobby'){ renderWait('lobby'); show('s-p-wait'); }
   else if(d.status === 'question'){
     if(d.qIndex !== P.lastQ){
-      P.lastQ = d.qIndex; P.answered = false; P.choice = -1; P.recv = performance.now();
+      P.lastQ = d.qIndex; P.answered = false; P.choice = -1; P.recv = performance.now(); P.pauseSeq = d.pauseSeq;
       renderPlay(); show('s-p-play');
+    } else if(d.pauseSeq !== P.pauseSeq){
+      P.pauseSeq = d.pauseSeq;
+      // setelah dilanjutkan, samakan sisa waktu dengan host
+      if(!d.paused && typeof d.remaining === 'number') P.recv = performance.now() - ((d.duration || 15) * 1000 - d.remaining);
     }
   }
   else if(d.status === 'reveal'){ clearInterval(P.timer); renderFeedback(); show('s-p-feedback'); }
@@ -1086,8 +1274,9 @@ function renderPlay(){
   box.className = 'pbtns n' + q.options.length;
   box.innerHTML = q.options.map((o, i) => `<button class="pbtn o${i}" data-a="${i}"><span class="shape">${SHAPES[i]}</span><span>${esc(o)}</span></button>`).join('');
   clearInterval(P.timer);
-  const dur = (d.duration || 20) * 1000;
+  const dur = (d.duration || 15) * 1000;
   const tick = () => {
+    if(P.room?.paused) return;
     const rem = Math.max(0, dur - (performance.now() - P.recv));
     $('#pp-sec').textContent = Math.ceil(rem / 1000) + ' dtk';
     $('#pp-bar').style.width = (rem / dur * 100) + '%';
@@ -1099,7 +1288,7 @@ function renderPlay(){
   tick(); P.timer = setInterval(tick, 150);
 }
 $('#pp-opts').addEventListener('click', async e => {
-  const b = e.target.closest('[data-a]'); if(!b || P.answered) return;
+  const b = e.target.closest('[data-a]'); if(!b || P.answered || P.room?.paused) return;
   P.answered = true; P.choice = +b.dataset.a;
   const ms = Math.round(performance.now() - P.recv), qi = P.lastQ;
   clearInterval(P.timer);
