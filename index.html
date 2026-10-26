@@ -605,7 +605,9 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
           <label class="field">Salah<input id="set-bad" type="number" step="10" value="-500"></label>
           <label class="field">Tidak menjawab<input id="set-none" type="number" step="10" value="-300"></label>
           <label class="field wide">Batas poin pemenang<input id="set-target" type="number" step="100" min="1" value="40000"></label>
-          <label class="check wide"><input type="checkbox" id="set-repeat" checked> Ulangi soal (diacak) kalau soal habis sebelum ada yang mencapai batas poin</label>
+          <label class="check wide"><input type="checkbox" id="set-shuffle-q" checked> Acak urutan soal</label>
+          <label class="check wide"><input type="checkbox" id="set-shuffle-opt" checked> Acak urutan pilihan jawaban (posisi A–D berubah tiap soal tampil)</label>
+          <label class="check wide"><input type="checkbox" id="set-repeat" checked> Ulangi soal kalau soal habis sebelum lomba selesai</label>
           <small class="muted wide">Soal baru pindah kalau ada yang menjawab <b>benar</b> (yang tercepat dapat poin). Jawaban salah langsung mengurangi poin, soal tetap, dan peserta boleh mencoba lagi. Kalau waktu habis tanpa jawaban benar, peserta yang sama sekali tidak menjawab kena poin "tidak menjawab".</small>
         </fieldset>
       </div>
@@ -1231,6 +1233,7 @@ async function createRoom(){
     const num = (id, def) => { const v = parseInt($(id).value, 10); return isNaN(v) ? def : v; };
     S.ptsOk = num('#set-ok', 1000); S.ptsBad = num('#set-bad', -500); S.ptsNone = num('#set-none', -300);
     S.target = Math.max(1, num('#set-target', 40000)); S.repeat = $('#set-repeat').checked;
+    S.shuffleQ = $('#set-shuffle-q').checked; S.shuffleOpt = $('#set-shuffle-opt').checked;
     S.time = +$('#set-time').value; S.title = $('#set-title').value.trim() || 'Balapan';
     let pin = '';
     for(let k = 0; k < 15; k++){
@@ -1242,7 +1245,7 @@ async function createRoom(){
     await setDoc(roomRef(), { status: 'lobby', tema: S.theme, title: S.title, sesiTotal: S.sessions, total: S.game.length, duration: S.time, qIndex: -1, createdAt: serverTimestamp() });
     H.players = {}; H.stat = {}; H.prog = {}; H.scored = new Set(); H.qStats = {}; H.livePos = {}; H.moveT = {};
     H.view = 'dash'; H.playing = false; H.started = false; H.paused = false; H.ansUnsub = null;
-    H.deck = S.game.map((_, i) => i); H.round = 1; H.qNo = 0; H.qi = -1; H.log = []; H.played = 0; H.sessPlayed = 0; H.resolved = true; H.result = null;
+    H.deck = S.shuffleQ ? shuffle(S.game.map((_, i) => i)) : S.game.map((_, i) => i); H.lastQi = -1; H.round = 1; H.qNo = 0; H.qi = -1; H.log = []; H.played = 0; H.sessPlayed = 0; H.resolved = true; H.result = null;
     H.sess = 0; H.sessStart = {}; H.sessDone = new Set(); H.sessScores = {}; H.totalSent = false;
     H.colorOf = {}; H.order = {}; H.nextColor = 0; H.palette = shuffle([...PALETTE]); H.hueOff = Math.random() * 360;
     S.unsubs.push(onSnapshot(collection(db, 'rooms', pin, 'players'), snap => {
@@ -1280,7 +1283,7 @@ async function closeRoom(){
 // Semua peserta mendapat soal yang sama. Begitu ada peserta yang menjawab paling cepat,
 // soal langsung ditutup dan pindah ke soal berikutnya. Benar/salah/tidak ada yang menjawab
 // memberi poin sesuai pengaturan. Lomba berakhir saat ada yang mencapai batas poin.
-const RESULT_MS = 2200, FIRST_WINDOW = 350;
+const RESULT_MS = 2200, FIRST_WINDOW = 350, NEXT_DELAY = 1500;   // jeda antarsoal 1,5 detik
 const st = id => (H.stat[id] ||= { score: 0, benar: 0, salah: 0 });
 const ranked = () => Object.values(H.players).sort((a, b) => st(b.id).score - st(a.id).score);
 const fmt = n => Number(n).toLocaleString('id-ID');
@@ -1297,6 +1300,7 @@ function pickQuestion(){
   if(!H.deck.length){
     if(!S.repeat) return null;
     H.deck = shuffle(S.game.map((_, i) => i));   // putaran berikutnya diacak
+    if(H.deck.length > 1 && H.deck[0] === H.lastQi) H.deck.push(H.deck.shift());   // jangan langsung mengulang soal yang sama
     H.round++;
   }
   return H.deck.shift();
@@ -1338,7 +1342,10 @@ async function nextQuestion(){
   H.qNo++; H.qi = qi; H.resolved = false; H.correct = []; H.result = null;
   H.wrong = []; H.tried = new Set(); H.seen = new Set();
   clearTimeout(H.windowT); H.windowT = null;
-  const q = S.game[qi];
+  H.lastQi = qi;
+  // pilihan jawaban diacak setiap kali soal tampil; kunci ikut dipetakan ke posisi barunya
+  const src = S.game[qi], order = S.shuffleOpt ? shuffle(src.options.map((_, i) => i)) : src.options.map((_, i) => i);
+  const q = H.cur = { text: src.text, options: order.map(i => src.options[i]), answer: order.indexOf(src.answer) };
   try{
     await setDoc(roomRef(), { status: 'playing', qNo: H.qNo, q: { text: q.text, options: q.options }, duration: S.time,
       paused: false, result: null, sesiNo: H.sess + 1, target: S.target }, { merge: true });
@@ -1361,7 +1368,7 @@ function handleAnswer(no, id, a){
   const pid = a.pid || id.split('_')[0];
   if(!H.players[pid] || !(a.choice >= 0)) return;
   H.tried.add(pid);
-  const q = S.game[H.qi];
+  const q = H.cur;
   if(a.choice === q.answer){
     H.correct.push({ pid, ms: a.ms ?? 9e9, choice: a.choice });
     if(!H.windowT) H.windowT = setTimeout(resolveCorrect, FIRST_WINDOW);
@@ -1410,10 +1417,14 @@ function advance(delta){
   H.log.length = Math.min(H.log.length, 30);
   H.played++; H.sessPlayed++;
   scheduleRender(); flyPoints(delta);
+  // soal ditutup di HP peserta, lalu jeda 1,5 detik sebelum soal berikutnya (ikut berhenti saat dijeda)
+  setDoc(roomRef(), { closedNo: H.qNo }, { merge: true }).catch(() => {});
   const winner = ranked().find(p => st(p.id).score >= S.target);
-  if(winner){ phaseStart('result', 1500, () => finishGame('target')); return; }   // beri waktu karakter sampai finis
-  if(H.sessPlayed >= S.per){ if(H.sess + 1 >= S.sessions) finishGame('sesi'); else endSession(); }
-  else nextQuestion();
+  phaseStart('result', NEXT_DELAY, () => {
+    if(winner) finishGame('target');
+    else if(H.sessPlayed >= S.per){ if(H.sess + 1 >= S.sessions) finishGame('sesi'); else endSession(); }
+    else nextQuestion();
+  });
 }
 
 $('#btn-end-sess').addEventListener('click', () => {
@@ -1455,7 +1466,7 @@ function resultText(r, withName = true){
 function renderDash(){
   if(current !== 's-host-dash') return;
   $('#dash-title').textContent = `Sesi ${H.sess + 1} dari ${S.sessions} · Soal ${H.sessPlayed + (H.resolved ? 0 : 1)}/${S.per}`;
-  const q = S.game[H.qi];
+  const q = H.cur;
   $('#dash-q').innerHTML = q ? `
     <p class="dq-text">${esc(q.text)}</p>
     <div class="dq-opts">${q.options.map((o, i) => `<div class="dq-opt ${i === q.answer ? 'key' : ''} ${H.result?.choice === i ? 'chosen' : ''}"><b>${SHAPES[i]} ${LETTERS[i]}.</b> ${esc(o)}${i === q.answer ? ' <em>✓ kunci</em>' : ''}</div>`).join('')}</div>
@@ -1502,7 +1513,7 @@ function renderLive(){
   }).join('') + (order.length > 12 ? `<li class="muted">+${order.length - 12} lainnya</li>` : '') || '<li class="muted">Menunggu peserta…</li>';
   $('#scr-title').textContent = `Balapan · Sesi ${H.sess + 1}/${S.sessions}`;
   $('#scr-done').textContent = `Batas ${fmt(S.target)} poin`;
-  const q = S.game[H.qi];
+  const q = H.cur;
   $('#lq-no').textContent = H.qNo ? `Soal ke-${H.qNo}` : '';
   $('#lq-text').textContent = q ? q.text : 'Menyiapkan soal…';
   $('#lq-opts').innerHTML = q ? q.options.map((o, i) => `<span class="lq-opt o${i}">${SHAPES[i]} ${esc(o)}</span>`).join('') : '';
@@ -1753,6 +1764,11 @@ function onRoom(d){
   if(d.status === 'lobby'){ renderWait('lobby'); show('s-p-wait'); }
   else if(d.status === 'playing'){
     if(d.qNo !== P.qNo){ P.qNo = d.qNo; showQ(); }
+    else if(d.closedNo === P.qNo && current === 's-p-play' && !P.closedShown){
+      P.closedShown = true; P.locked = true; clearInterval(P.timer);
+      $('#pp-opts').classList.add('lock');
+      if(!$('#pp-status').classList.contains('ok')) ppStatus('⏳ Soal ditutup, bersiap untuk soal berikutnya…');
+    }
   }
   else if(d.status === 'result' || d.status === 'session'){ clearInterval(P.timer); renderFeedback(); show('s-p-feedback'); }
   else if(d.status === 'finished'){ clearInterval(P.timer); renderEnd(); show('s-p-end'); }
@@ -1783,7 +1799,7 @@ function showQ(){
   const box = $('#pp-opts');
   box.className = 'pbtns n' + q.options.length;
   box.innerHTML = q.options.map((o, i) => `<button class="pbtn o${i}" data-a="${i}"><span class="shape">${SHAPES[i]}</span><span>${esc(o)}</span></button>`).join('');
-  P.locked = false; P.att = 0; P.dur = (d.duration || 15) * 1000; P.left = P.dur;
+  P.locked = false; P.closedShown = false; P.att = 0; P.dur = (d.duration || 15) * 1000; P.left = P.dur;
   ppStatus('');
   let last = performance.now();
   const draw = () => { $('#pp-sec').textContent = Math.ceil(Math.max(0, P.left) / 1000) + ' dtk'; $('#pp-bar').style.width = Math.max(0, P.left / P.dur * 100) + '%'; };
