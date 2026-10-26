@@ -329,6 +329,41 @@ span.nm{display:inline-flex;align-items:center;gap:8px}
 .track.live .runner .tag{font-size:clamp(11px, calc(var(--lane-h) * .18), 15px)}
 .track.live .rank{width:calc(var(--lane-h) * .5);height:calc(var(--lane-h) * .5);min-width:28px;min-height:28px}
 .tag .pg{color:var(--ink-soft);font-weight:700}
+/* ---- satu lapangan untuk semua ulat ---- */
+.arena{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px;align-items:stretch}
+@media (max-width:820px){.arena{grid-template-columns:1fr}}
+.field{
+  --s:20px;position:relative;height:max(340px, calc(100vh - 190px));border:var(--line);box-shadow:var(--pop);border-radius:26px;overflow:hidden;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), rgba(255,255,255,.12) calc(10% - 2px) 10%),
+    radial-gradient(circle at 20% 30%, rgba(0,0,0,.06) 0 2px, transparent 3px) 0 0/38px 38px,
+    linear-gradient(180deg,#c99459,#a8703b);
+}
+.field::before,.field::after{content:"";position:absolute;left:0;right:0;height:16px;background:repeating-linear-gradient(90deg,var(--grass) 0 14px,var(--grass-d) 14px 28px)}
+.field::before{top:0}.field::after{bottom:0}
+.field .start-line{position:absolute;left:18px;top:16px;bottom:16px;border-left:4px dashed rgba(255,255,255,.7)}
+.field .finish{position:absolute;right:76px;top:16px;bottom:16px;width:14px;
+  background:conic-gradient(#fff 25%,var(--ink) 0 50%,#fff 0 75%,var(--ink) 0) 0 0/14px 14px}
+.field .leaf{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:58px;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.25))}
+.field .runner{position:absolute;left:0;transition:left 1.4s cubic-bezier(.25,.9,.3,1)}
+.field .ulat{--s:inherit}
+.field .runner .tag{font-size:clamp(10px, calc(var(--s) * .62), 15px);padding:0 8px;max-width:150px}
+.field .runner.lead{z-index:99!important}
+.runner.lead .crown-mini{display:inline}
+.jostle{display:flex;flex-direction:column;align-items:flex-start;animation:jostle var(--d,2s) ease-in-out infinite;animation-delay:var(--dl,0s)}
+@keyframes jostle{0%,100%{transform:translateX(0)}50%{transform:translateX(calc(var(--s) * .45))}}
+body.is-paused .jostle{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.jostle{animation:none}}
+.board{background:var(--paper);border:var(--line);box-shadow:var(--pop);border-radius:22px;padding:14px;overflow:auto;max-height:max(340px, calc(100vh - 190px))}
+.board h3{font-size:22px;margin-bottom:8px}
+.board ol{list-style:none;padding:0;display:grid;gap:6px}
+.board li{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:8px;padding:5px 6px;border-radius:12px}
+.board li.top{background:#fff6c2}
+.board .rk{font-family:var(--display);font-size:18px;text-align:center}
+.board .who{display:flex;align-items:center;gap:6px;min-width:0;font-weight:800}
+.board .who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board .pt{font-family:var(--display);font-size:18px;text-align:right;line-height:1}
+.board .pt small{display:block;font-family:var(--body);font-size:11px;color:var(--ink-soft);font-weight:700}
 .pbtns.lock .pbtn{opacity:.35;transition:opacity .2s}
 .pbtns.lock .pbtn.picked{opacity:1;transform:scale(1.04)}
 /* kontrol otomatis & jeda */
@@ -503,7 +538,10 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
       <h2 id="scr-title">Balapan Ulat</h2>
       <span class="right sheet-status" id="scr-done"></span>
     </header>
-    <div class="track live racing" id="live-track"></div>
+    <div class="arena">
+      <div class="field racing" id="live-track"></div>
+      <aside class="board"><h3>Peringkat</h3><ol id="live-board"></ol></aside>
+    </div>
     <div class="race-actions">
       <button class="btn-sm" data-view="dash">📋 Mode Jawaban</button>
       <button class="btn-sm" id="btn-fs">⛶ Layar penuh</button>
@@ -1067,46 +1105,50 @@ function renderDash(){
     }).join('') : '<tr><td colspan="5" class="muted">Belum ada peserta.</td></tr>');
 }
 
-// Balapan langsung: tiap jawaban benar membuat ulat maju satu langkah; ulat yang semua benar sampai di daun.
+// Satu lapangan: semua ulat berlari bersama. Tiap jawaban benar membuat ulat maju;
+// ulat yang semua benar sampai di daun. Ulat berjejer dan saling tumpuk saat posisinya berdekatan.
 function renderLive(){
   if(current !== 's-host-screen') return;
-  const track = $('#live-track'), len = sessLen(H.sess), total = S.game.length;
-  const lanes = Object.values(H.players).sort((a, b) => (H.order[a.id] ?? 999) - (H.order[b.id] ?? 999)).slice(0, 30);
-  const key = lanes.map(p => p.id).join(',');
-  if(track.dataset.key !== key){
-    track.dataset.key = key;
-    const avail = window.innerHeight - 210;
-    track.style.setProperty('--lane-h', Math.max(38, Math.min(92, Math.floor(avail / Math.max(1, lanes.length)) - 10)) + 'px');
-    track.innerHTML = lanes.length ? lanes.map(p => `
-      <div class="lane" data-id="${p.id}">
-        <div class="rank">–</div>
-        <div class="road"><span class="finish"></span><span class="leaf">🍃</span>
-          <div class="runner" style="left:${posCss(H.livePos[p.id] || 0, RW)}">
-            <span class="tag"><b class="crown-mini">👑</b>${esc(p.nama)} <span class="pg"></span></span>
-            <span class="dust"></span>${ulat(pc(p.id))}
-          </div>
-        </div>
-        <div class="sc">0</div>
-      </div>`).join('') : '<p class="more">Menunggu peserta…</p>';
+  const field = $('#live-track'), len = sessLen(H.sess), total = S.game.length;
+  const racers = Object.values(H.players).sort((a, b) => (H.order[a.id] ?? 999) - (H.order[b.id] ?? 999));
+  const key = racers.map(p => p.id).join(',');
+  if(field.dataset.key !== key){
+    field.dataset.key = key;
+    const n = racers.length, sz = n <= 8 ? 24 : n <= 16 ? 20 : n <= 30 ? 16 : 13;
+    field.style.setProperty('--s', sz + 'px');
+    H.fieldW = Math.round(sz * 4.6 + 96);                 // lebar ulat + jarak ke garis finis
+    const h = field.clientHeight || 420, top0 = 22, bottom = h - 22 - sz * 2.9;
+    const rowH = sz * 2.3, maxRows = Math.max(1, Math.floor((bottom - top0) / rowH) + 1), rows = Math.min(n || 1, maxRows);
+    field.innerHTML = '<span class="start-line"></span><span class="finish"></span><span class="leaf">🍃</span>' +
+      racers.map((p, i) => {
+        const slot = i % rows, wrap = Math.floor(i / rows);
+        const y = rows > 1 ? top0 + slot * (bottom - top0) / (rows - 1) : (h - sz * 2.9) / 2;
+        const yy = Math.min(bottom, y + (wrap % 2 ? rowH * .45 : 0));   // baris berikutnya diselipkan, jadi ulat menumpuk
+        const d = (1.4 + Math.random() * 1.4).toFixed(2), dl = (Math.random() * 2).toFixed(2);
+        return `<div class="runner" data-id="${p.id}" style="top:${Math.round(yy)}px;z-index:${10 + Math.round(yy)};left:${posCss(H.livePos[p.id] || 0, H.fieldW)}">
+          <div class="jostle" style="--d:${d}s;--dl:-${dl}s"><span class="tag"><b class="crown-mini">👑</b>${esc(p.nama)}</span>
+          <span class="dust"></span>${ulat(pc(p.id))}</div></div>`;
+      }).join('');
   }
-  const order = ranked().map(p => p.id);
-  lanes.forEach(p => {
-    const lane = track.querySelector(`.lane[data-id="${p.id}"]`); if(!lane) return;
-    const s = st(p.id), pos = s.benar / total, runner = lane.querySelector('.runner');
+  const order = ranked(), leadId = order[0] && st(order[0].id).score > 0 ? order[0].id : null;
+  racers.forEach(p => {
+    const runner = field.querySelector(`.runner[data-id="${p.id}"]`); if(!runner) return;
+    const pos = st(p.id).benar / total;
     if(H.livePos[p.id] !== pos){
       void runner.offsetWidth;
-      runner.style.left = posCss(pos, RW);
+      runner.style.left = posCss(pos, H.fieldW);
       runner.classList.add('moving'); clearTimeout(H.moveT[p.id]);
       H.moveT[p.id] = setTimeout(() => runner.classList.remove('moving'), 1400);
       H.livePos[p.id] = pos;
     }
-    lane.querySelector('.sc').textContent = s.score;
-    const pr = Math.min(progOf(p.id), len);
-    lane.querySelector('.pg').textContent = pr >= len ? '✅' : `${pr}/${len}`;
-    const r = order.indexOf(p.id) + 1, rk = lane.querySelector('.rank');
-    if(rk.textContent !== String(r)){ rk.textContent = r; rk.className = 'rank'; void rk.offsetWidth; rk.className = 'rank bump' + (r <= 3 ? ' r' + r : ''); }
-    lane.classList.toggle('lead', r === 1 && s.score > 0);
+    runner.classList.toggle('lead', p.id === leadId);
   });
+  $('#live-board').innerHTML = order.slice(0, 12).map((p, i) => {
+    const s = st(p.id), pr = Math.min(progOf(p.id), len);
+    return `<li class="${i < 3 ? 'top' : ''}"><span class="rk">${i === 0 && leadId ? '👑' : i + 1}</span>
+      <span class="who">${ulat(pc(p.id), 'sm')}<span>${esc(p.nama)}</span></span>
+      <span class="pt">${s.score}<small>${pr >= len ? 'selesai ✅' : `soal ${pr}/${len}`}</small></span></li>`;
+  }).join('') + (order.length > 12 ? `<li class="muted">+${order.length - 12} lainnya</li>` : '') || '<li class="muted">Menunggu peserta…</li>';
   $('#scr-title').textContent = S.sessions > 1 ? `Balapan Ulat · Sesi ${H.sess + 1}` : 'Balapan Ulat';
   const done = Object.keys(H.players).filter(id => progOf(id) >= len).length;
   $('#scr-done').textContent = `${done}/${Object.keys(H.players).length} selesai`;
