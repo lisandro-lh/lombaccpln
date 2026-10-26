@@ -500,7 +500,7 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
       <h1>Balapan</h1>
       <p class="tagline">Kuis cerdas cermat PLN UP3 Tobelo. Jawab paling cepat dan benar, jagoanmu makin dekat ke garis finis.</p>
       <div class="menu">
-        <button class="big-btn host" data-go="s-host-login">🎤 Host<small>Upload soal dan pandu lomba</small></button>
+        <button class="big-btn host" id="btn-host-enter">🎤 Host<small>Upload soal dan pandu lomba</small></button>
         <button class="big-btn player" data-go="s-join">📱 Peserta<small>Gabung pakai PIN dari host</small></button>
       </div>
       <button class="link-btn" data-go="s-help">Cara main dan format soal</button>
@@ -514,7 +514,7 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
       <div class="card">
         <h3>Untuk host</h3>
         <ol>
-          <li>Pilih <b>Host</b> dan masukkan <b>kode host</b>. Hanya satu perangkat yang bisa menjadi host dalam satu waktu.</li>
+          <li>Pilih <b>Host</b>. Hanya satu perangkat yang bisa menjadi host dalam satu waktu; perangkat lain tidak bisa masuk selama host masih aktif.</li>
           <li>Upload file soal (PDF, Word .docx, atau .txt).</li>
           <li>Cek pratinjau. Kunci jawaban ditandai hijau. Klik pilihan lain untuk mengganti kunci.</li>
           <li>Tekan <b>Buat ruangan</b>. Tampilkan PIN di proyektor.</li>
@@ -544,18 +544,6 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
           <button class="btn-sm yellow" id="btn-dl-template">⬇ Unduh contoh format (.txt)</button>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- ============ MASUK HOST ============ -->
-  <section id="s-host-login" class="screen">
-    <header class="bar"><button class="back" data-back>← Kembali</button><h2>Masuk sebagai Host</h2><span></span></header>
-    <div class="p-card join-form">
-      <div class="big-icon">🔐</div>
-      <p class="muted">Masukkan kode host. Hanya satu perangkat yang bisa menjadi host dalam satu waktu.</p>
-      <input id="input-hostcode" type="password" autocomplete="off" placeholder="Kode host" aria-label="Kode host">
-      <button class="cta" id="btn-host-login">Masuk</button>
-      <p class="login-msg" id="host-login-msg" role="alert"></p>
     </div>
   </section>
 
@@ -825,10 +813,6 @@ const firebaseConfig = {
   measurementId: "G-CLEP11LDMQ"
 };
 // --- GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA ---
-// --- KODE HOST ---
-// Disimpan dalam bentuk sidik (SHA-256) supaya kodenya tidak terbaca di kode halaman.
-// Kode bawaan: TOBELO2026 (huruf besar/kecil tidak dibedakan).
-const HOST_CODE_SHA256 = "fb208d28cc140f300a0b8e8ad4ebe74c69360cd19b8ee14e6eed81019f5c030c";
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbylDJ5Ka5eGU_5Ze9PUIlzPsF-6cl2t2UNxijhVXAJ7XoVNwQEeDYQE18zcqvJlhxvN/exec";
 
 const db = getFirestore(initializeApp(firebaseConfig));
@@ -1007,7 +991,7 @@ document.addEventListener('click', e => {
 });
 function handleBack(){
   switch(current){
-    case 's-help': case 's-join': case 's-host-setup': case 's-host-login': show('s-home'); break;
+    case 's-help': case 's-join': case 's-host-setup': show('s-home'); break;
     case 's-host-lobby':
       if(confirm('Tutup ruangan? Semua peserta akan dikeluarkan.')){ closeRoom(); show('s-host-setup'); } break;
     case 's-host-dash': case 's-host-screen': {
@@ -1160,17 +1144,13 @@ $('#q-list').addEventListener('click', e => {
   if(d && confirm('Hapus soal nomor ' + (+d.dataset.del + 1) + '?')){ S.questions.splice(+d.dataset.del, 1); renderPreview(); }
 });
 
-/* ======================= HOST: KODE & KUNCI SATU HOST ======================= */
+/* ======================= HOST: HANYA SATU HOST ======================= */
 const LOCK_TTL = 120000, LOCK_BEAT = 20000;           // kunci kedaluwarsa 2 menit setelah host berhenti mengirim tanda aktif
 const lockRef = () => doc(db, 'rooms', '_hostlock');
 let hostSid = '';
 try{ hostSid = sessionStorage.getItem('balapHostSid') || ''; }catch{}
 if(!hostSid){ hostSid = 'h' + Math.random().toString(36).slice(2, 10); try{ sessionStorage.setItem('balapHostSid', hostSid); }catch{} }
 
-async function sha256(t){
-  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
-  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
-}
 function acquireHost(){
   return runTransaction(db, async tx => {
     const snap = await tx.get(lockRef()), d = snap.exists() ? snap.data() : null;
@@ -1199,26 +1179,21 @@ function releaseHost(){
 }
 window.addEventListener('pagehide', () => { if(H.hasLock) deleteDoc(lockRef()).catch(() => {}); });
 
-async function hostLogin(){
-  const code = $('#input-hostcode').value.trim(), msg = $('#host-login-msg'), btn = $('#btn-host-login');
-  if(!code){ msg.textContent = 'Masukkan kode host.'; return; }
-  btn.disabled = true; btn.textContent = 'Memeriksa…'; msg.textContent = '';
+// Tombol Host: langsung masuk tanpa kode, kecuali sudah ada host aktif di perangkat lain
+async function hostEnter(){
+  const btn = $('#btn-host-enter'); if(btn.disabled) return;
+  btn.disabled = true;
   try{
-    if(!window.crypto?.subtle) throw new Error('Browser ini tidak mendukung pemeriksaan kode. Buka lewat alamat https.');
-    if(await sha256(code.toUpperCase()) !== HOST_CODE_SHA256) throw new Error('WRONG');
     await acquireHost();
     startBeat();
     document.body.classList.add('host-mode');
-    $('#input-hostcode').value = '';
     show('s-host-setup');
   }catch(e){
-    msg.textContent = e.message === 'WRONG' ? '❌ Kode host salah.'
-      : e.message === 'LOCKED' ? '🔒 Sudah ada host yang masuk di perangkat lain. Tunggu sampai host tersebut keluar (kalau perangkatnya tertutup tiba-tiba, kunci terbuka sendiri dalam ±2 menit).'
-      : '⚠ ' + fbErr(e);
-  }finally{ btn.disabled = false; btn.textContent = 'Masuk'; }
+    if(e.message === 'LOCKED') alert('🔒 Mode Host sedang dipakai di perangkat lain.\n\nTunggu sampai host tersebut kembali ke menu utama atau menutup halamannya. Kalau perangkat host mati tiba-tiba, mode Host terbuka sendiri dalam ±2 menit.');
+    else toast('⚠ ' + fbErr(e));
+  }finally{ btn.disabled = false; }
 }
-$('#btn-host-login').addEventListener('click', hostLogin);
-$('#input-hostcode').addEventListener('keydown', e => { if(e.key === 'Enter') hostLogin(); });
+$('#btn-host-enter').addEventListener('click', hostEnter);
 
 /* ======================= HOST: RUANGAN ======================= */
 $('#btn-create-room').addEventListener('click', createRoom);
