@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Balapan Ulat · Kuis Cerdas Cermat PLN UP3 Tobelo</title>
+<title>Balapan · Kuis Cerdas Cermat PLN UP3 Tobelo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
@@ -101,9 +101,10 @@ h1,h2,h3{font-family:var(--display);line-height:1.05}
 .hero h1{font-size:clamp(52px,10vw,104px);letter-spacing:-.01em;color:var(--ink);text-shadow:4px 4px 0 var(--yellow)}
 .hero .tagline{font-size:clamp(16px,2.2vw,21px);color:var(--ink-soft);max-width:34ch}
 .hero-track{width:min(560px,92vw);height:58px;position:relative;border-bottom:4px dashed var(--soil-d)}
-.hero-ulat{position:absolute;bottom:2px;left:0;animation:stroll 9s linear infinite}
+.hero-ulat{position:absolute;bottom:2px;left:0;display:flex;align-items:flex-end;gap:10px;animation:stroll 10s linear infinite}
+.hr-thief{margin-left:22px}
 .hero-track .leaf{position:absolute;right:-6px;bottom:2px;font-size:34px}
-@keyframes stroll{from{left:0}to{left:calc(100% - 120px)}}
+@keyframes stroll{from{left:0}to{left:calc(100% - 300px)}}
 .menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;width:min(620px,100%)}
 .big-btn{
   text-align:left;border:var(--line);box-shadow:var(--pop);border-radius:22px;padding:18px 20px;
@@ -362,6 +363,58 @@ span.nm{display:inline-flex;align-items:center;gap:8px}
 @keyframes fly{from{transform:translate(-50%,0);opacity:1}to{transform:translate(-50%,-48px);opacity:0}}
 .jostle{position:relative}
 .runner.back .ulat{transform:scaleX(-1)}
+/* ---- karakter & tampilan balapan ---- */
+.avw{display:inline-block;height:var(--h);width:calc(var(--h) * .8);flex:none;vertical-align:middle}
+.avw svg{width:100%;height:100%;overflow:visible;display:block}
+.race-field .runner .avw{--h:calc(var(--s) * 3) !important}
+.race-field .runner.v .avw{--h:calc(var(--s) * 3.3) !important}
+.runner:not(.v).back .avw{transform:scaleX(-1)}
+.theme-pick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:6px}
+@media (max-width:520px){.theme-pick{grid-template-columns:1fr}}
+.theme-card{position:relative;display:flex;align-items:center;gap:8px;border:2px solid #cfd8e3;border-radius:12px;padding:8px 10px;cursor:pointer;font-weight:800;font-size:14px;background:#fff}
+.theme-card input{position:absolute;opacity:0;pointer-events:none}
+.theme-card:has(input:checked){border-color:var(--ink);background:#fff6c2;box-shadow:3px 3px 0 var(--ink)}
+.theme-card:focus-within{outline:3px solid var(--pln);outline-offset:2px}
+.tc-art{display:inline-flex;align-items:flex-end;justify-content:center;min-width:44px}
+.theme-sel{display:inline-flex;align-items:center;gap:4px}
+.theme-sel select{border:0;background:transparent;font:inherit;font-weight:800;color:inherit;max-width:230px}
+/* vertikal: panjat tiang & pemadam */
+.race-field .runner.v{transform:translateX(-50%);transition:bottom 1.4s cubic-bezier(.25,.9,.3,1)}
+.race-field .runner.v .jostle{align-items:center;animation-name:climb}
+@keyframes climb{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(var(--s) * -.25))}}
+.race-field .runner.v .tag{max-width:110px;font-size:clamp(9px, calc(var(--s) * .55), 13px)}
+.race-field .col{position:absolute;bottom:20px;top:58px;transform:translateX(-50%);z-index:2}
+.race-field .top-line{position:absolute;left:0;right:0;top:66px;border-top:4px dashed rgba(23,50,77,.55);z-index:3}
+.race-field .top-line::after{position:absolute;right:10px;top:-28px;font-weight:800;color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:999px;padding:0 10px;font-size:14px}
+.race-field.th-tiang,.race-field.th-pemadam,.race-field.th-p2tl{background-image:none}
+.race-field.th-tiang::before,.race-field.th-pemadam::before,.race-field.th-p2tl::before{display:none}
+.race-field.th-tiang{background:linear-gradient(180deg,#8fd0ff 0%,#dff3ff 78%,#cfeec0 100%)}
+.th-tiang .col{width:9px;background:linear-gradient(90deg,#8d97a0,#e3e8ec 45%,#7b858e);border:1.5px solid var(--ink);border-radius:3px}
+.th-tiang .col::before{content:"";position:absolute;top:8px;left:50%;width:48px;height:6px;transform:translateX(-50%);background:#6d7780;border:1.5px solid var(--ink);border-radius:2px}
+.th-tiang .col::after{content:"";position:absolute;top:-2px;left:50%;width:34px;height:10px;transform:translateX(-50%);background:radial-gradient(circle,#fff 0 2.5px,var(--ink) 3px 4px,transparent 4.5px) 0 0/12px 10px repeat-x}
+.th-tiang .wires{position:absolute;left:0;right:0;top:56px;height:12px;border-top:2px solid #2d2d2d;border-bottom:2px solid #2d2d2d;opacity:.7;z-index:1}
+.th-tiang .top-line::after{content:"⚡ Puncak tiang"}
+.race-field.th-pemadam{background:linear-gradient(180deg,#ff9f66 0%,#ffd3a0 45%,#fde8c8 100%)}
+.race-field.th-pemadam::after{height:20px;background:repeating-linear-gradient(90deg,#4b4f57 0 34px,#f4f4f4 34px 48px)}
+.th-pemadam .bld{position:absolute;left:3%;right:3%;top:58px;bottom:20px;border:3px solid var(--ink);border-bottom:0;border-radius:8px 8px 0 0;z-index:0;
+  background-color:#4f6f9a;background-image:linear-gradient(90deg,transparent 62%,#c9a98c 62%),linear-gradient(0deg,transparent 58%,#c9a98c 58%);background-size:36px 32px}
+.th-pemadam .flames{position:absolute;left:3%;right:3%;top:18px;height:46px;overflow:hidden;white-space:nowrap;text-align:center;font-size:30px;line-height:46px;letter-spacing:-4px;z-index:4;pointer-events:none;transform-origin:bottom;animation:flicker .9s ease-in-out infinite alternate}
+@keyframes flicker{from{transform:scaleY(1);filter:brightness(1)}to{transform:scaleY(1.14);filter:brightness(1.2)}}
+.th-pemadam .col{width:22px;background:linear-gradient(90deg,#c62828 0 3px,transparent 3px calc(100% - 3px),#c62828 calc(100% - 3px)),repeating-linear-gradient(0deg,transparent 0 9px,#c62828 9px 12px)}
+.th-pemadam .top-line{border-top-color:rgba(255,255,255,.9)}
+.th-pemadam .top-line::after{content:"🔥 Padamkan api di puncak";top:8px}
+body.is-paused .flames{animation-play-state:paused}
+/* P2TL kejar pencuri */
+.race-field.th-p2tl{background:
+  repeating-linear-gradient(90deg,rgba(255,255,255,.75) 0 28px,transparent 28px 60px) 0 62%/100% 4px no-repeat,
+  linear-gradient(180deg,#bfe6ff 0 15%,#9ccc65 15% 18%,#d0d4da 18% 20%,#5f6670 20% 100%)}
+.race-field.th-p2tl::after{height:14px;background:#d0d4da}
+.th-p2tl .houses{position:absolute;left:0;right:0;top:0;height:15%;display:flex;align-items:flex-end;justify-content:space-around;font-size:clamp(16px,3vh,30px);overflow:hidden;white-space:nowrap}
+.race-field.th-p2tl .start-line{top:20%}
+.race-field.th-p2tl .finish{top:20%;background:repeating-linear-gradient(180deg,#ffd600 0 12px,#111 12px 24px)}
+.th-p2tl .thief{position:absolute;right:10px;top:58%;z-index:95;animation:flee .45s ease-in-out infinite alternate}
+@keyframes flee{from{transform:translateY(-50%)}to{transform:translateY(calc(-50% - 7px)) rotate(-4deg)}}
+body.is-paused .thief{animation-play-state:paused}
 .end-note{text-align:center;font-family:var(--display);font-size:24px}
 .end-note:empty{display:none}
 /* ---- satu lapangan untuk semua ulat ---- */
@@ -435,11 +488,10 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
   <section id="s-home" class="screen active">
     <div class="hero">
       <div class="hero-track" aria-hidden="true">
-        <div class="hero-ulat"><div class="ulat lg" style="--c:#7bd36b"><i></i><i></i><i></i><i></i><b class="head"><em></em><em></em><u></u></b></div></div>
-        <span class="leaf">🍃</span>
+        <div class="hero-ulat" id="hero-run"></div>
       </div>
-      <h1>Balapan Ulat</h1>
-      <p class="tagline">Kuis cerdas cermat PLN UP3 Tobelo. Jawab benar dan cepat, ulatmu makin dekat ke daun.</p>
+      <h1>Balapan</h1>
+      <p class="tagline">Kuis cerdas cermat PLN UP3 Tobelo. Jawab paling cepat dan benar, jagoanmu makin dekat ke garis finis.</p>
       <div class="menu">
         <button class="big-btn host" data-go="s-host-setup">🎤 Host<small>Upload soal dan pandu lomba</small></button>
         <button class="big-btn player" data-go="s-join">📱 Peserta<small>Gabung pakai PIN dari host</small></button>
@@ -521,6 +573,10 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
           <small class="muted" id="sess-info">Upload soal dulu untuk melihat pembagian sesi.</small>
         </label>
         <fieldset class="rules">
+          <legend>Tampilan balapan</legend>
+          <div class="theme-pick wide" id="theme-pick"></div>
+        </fieldset>
+        <fieldset class="rules">
           <legend>Aturan poin</legend>
           <label class="field">Benar<input id="set-ok" type="number" step="10" value="1000"></label>
           <label class="field">Salah<input id="set-bad" type="number" step="10" value="-500"></label>
@@ -590,14 +646,13 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
   <section id="s-host-screen" class="screen">
     <header class="bar">
       <button class="back" data-back>← Kembali</button>
-      <h2 id="scr-title">Balapan Ulat</h2>
+      <h2 id="scr-title">Balapan</h2>
       <span class="right sheet-status" id="scr-done"></span>
     </header>
     <div class="live-q">
       <div class="lq-head"><span class="lq-no" id="lq-no"></span><span class="lq-text" id="lq-text"></span><span class="q-timer-sec lq-sec"></span></div>
       <div class="lq-opts" id="lq-opts"></div>
       <div class="ptimer"><div class="q-timer-bar" id="lq-bar"></div></div>
-      <div class="lq-result" id="lq-result"></div>
     </div>
     <div class="arena">
       <div class="race-field racing" id="live-track"></div>
@@ -605,6 +660,7 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
     </div>
     <div class="race-actions">
       <button class="btn-sm" data-view="dash">📋 Mode Jawaban</button>
+      <label class="btn-sm theme-sel">🎨 <select id="theme-select" aria-label="Tampilan balapan"></select></label>
       <button class="btn-sm" id="btn-fs">⛶ Layar penuh</button>
       <button class="cta btn-pause">⏸ Jeda</button>
     </div>
@@ -757,6 +813,76 @@ const PALETTE = ['#ef5350','#ff9800','#ffd600','#c0dd3a','#43c35e','#26a69a','#2
 const shuffle = a => { for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const ulat = (c, size='') => `<div class="ulat ${size}" style="--c:${c||'#7bd36b'}"><i></i><i></i><i></i><i></i><b class="head"><em></em><em></em><u></u></b></div>`;
 const posCss = (p, w=130) => `calc((100% - ${w}px) * ${Math.max(0, Math.min(1, p)).toFixed(4)})`;
+
+/* ---------- Tampilan balapan & karakter ---------- */
+const THEMES = {
+  ulat:    { name: 'Ulat ke Daun',               icon: '🐛', dir: 'h' },
+  tiang:   { name: 'Petugas PLN Panjat Tiang',   icon: '🗼', dir: 'v' },
+  pemadam: { name: 'Pemadam Padamkan Api',       icon: '🚒', dir: 'v' },
+  p2tl:    { name: 'P2TL Kejar Pencuri Listrik', icon: '🚓', dir: 'h' }
+};
+const INK = '#17324d', SKIN = '#f2c28b';
+// garis tebal bergaris tepi: gambar tinta dulu, lalu warna di atasnya
+const ln = (d, c, w) => `<path d="${d}" fill="none" stroke="${INK}" stroke-width="${w + 3}" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const AV = {
+  // petugas PLN memanjat, tampak belakang: helm kuning, sabuk pengaman, baju warna peserta
+  tiang: c => `<svg viewBox="0 0 40 54">
+    ${ln('M13 24 L8 7', SKIN, 5)}${ln('M27 24 L32 9', SKIN, 5)}
+    <circle cx="8" cy="7" r="3.4" fill="#3d3d3d" stroke="${INK}" stroke-width="1.5"/><circle cx="32" cy="9" r="3.4" fill="#3d3d3d" stroke="${INK}" stroke-width="1.5"/>
+    ${ln('M16 38 L13 50', '#2b3f73', 6)}${ln('M24 38 L28 47', '#2b3f73', 6)}
+    <rect x="10" y="19" width="20" height="21" rx="6" fill="${c}" stroke="${INK}" stroke-width="2"/>
+    <rect x="9" y="33" width="22" height="4.5" rx="2" fill="#333" stroke="${INK}" stroke-width="1.5"/>
+    <path d="M9 35 C2 33 2 26 8 24" fill="none" stroke="#e8a317" stroke-width="2"/>
+    <circle cx="20" cy="14" r="6.2" fill="${SKIN}" stroke="${INK}" stroke-width="2"/>
+    <path d="M12.6 13.5 A7.6 7.6 0 0 1 27.4 13.5 L29.5 15.2 L10.5 15.2 Z" fill="#ffd600" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
+  </svg>`,
+  // pemadam memanjat tangga: helm merah, tabung oksigen, garis reflektif
+  pemadam: c => `<svg viewBox="0 0 40 54">
+    ${ln('M13 24 L8 8', c, 5)}${ln('M27 24 L32 10', c, 5)}
+    <circle cx="8" cy="8" r="3.4" fill="#ffcf33" stroke="${INK}" stroke-width="1.5"/><circle cx="32" cy="10" r="3.4" fill="#ffcf33" stroke="${INK}" stroke-width="1.5"/>
+    ${ln('M16 38 L13 50', '#2f2f2f', 6)}${ln('M24 38 L28 47', '#2f2f2f', 6)}
+    <rect x="10" y="19" width="20" height="21" rx="6" fill="${c}" stroke="${INK}" stroke-width="2"/>
+    <rect x="10" y="30" width="20" height="3" fill="#fff36b"/><rect x="10" y="35" width="20" height="3" fill="#fff36b"/>
+    <rect x="14.5" y="21" width="11" height="12" rx="5" fill="#cfd8dc" stroke="${INK}" stroke-width="1.5"/>
+    <circle cx="20" cy="14" r="6.2" fill="${SKIN}" stroke="${INK}" stroke-width="2"/>
+    <path d="M11.5 14 A8.5 8 0 0 1 28.5 14 L32 16.4 L8 16.4 Z" fill="#d62828" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M20 6 L20 13" stroke="#ffd600" stroke-width="2"/>
+  </svg>`,
+  // petugas P2TL berlari ke kanan: topi biru tua, rompi reflektif
+  p2tl: c => `<svg viewBox="0 0 44 52">
+    ${ln('M20 34 L12 46 L8 46', '#2b3f73', 6)}${ln('M23 34 L31 41 L36 48', '#2b3f73', 6)}
+    ${ln('M17 23 L10 31', SKIN, 4.5)}
+    <rect x="14" y="18" width="15" height="18" rx="5" fill="${c}" stroke="${INK}" stroke-width="2"/>
+    <rect x="14" y="26" width="15" height="3.2" fill="#ffd600"/>
+    ${ln('M25 23 L33 27 L37 21', SKIN, 4.5)}
+    <circle cx="24" cy="12" r="6.2" fill="${SKIN}" stroke="${INK}" stroke-width="2"/>
+    <circle cx="27" cy="12" r="1.2" fill="${INK}"/>
+    <path d="M17 10 A7 6.5 0 0 1 30.5 8.6 L36 10.6 L17 11 Z" fill="${INK}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle cx="24" cy="7.4" r="1.6" fill="#ffd600"/>
+  </svg>`
+};
+// pencuri listrik kabur membawa karung dan kabel colokan
+const THIEF = `<svg viewBox="0 0 54 56">
+  <path d="M10 30 C3 36 11 42 4 49" fill="none" stroke="#222" stroke-width="2.4"/>
+  <rect x="0.5" y="47" width="7" height="5.5" rx="1.5" fill="#555" stroke="${INK}" stroke-width="1.5"/><path d="M2.5 52.5 v3 M5.5 52.5 v3" stroke="${INK}" stroke-width="1.5"/>
+  ${ln('M27 37 L19 48 L14 48', '#333', 6)}${ln('M30 37 L38 44 L43 51', '#333', 6)}
+  <circle cx="13" cy="27" r="8.5" fill="#a1785a" stroke="${INK}" stroke-width="2"/>
+  <path d="M14 22 l-3 5 h3 l-2 5 5-6 h-3 l2-4 z" fill="#ffd600" stroke="${INK}" stroke-width=".8"/>
+  ${ln('M23 25 L15 22', SKIN, 4.5)}
+  <rect x="21" y="20" width="16" height="19" rx="5" fill="#2b2b2b" stroke="${INK}" stroke-width="2"/>
+  <rect x="21" y="25" width="16" height="2.4" fill="#eee"/><rect x="21" y="31" width="16" height="2.4" fill="#eee"/>
+  ${ln('M34 25 L42 28 L46 24', SKIN, 4.5)}
+  <circle cx="31" cy="13" r="7" fill="${SKIN}" stroke="${INK}" stroke-width="2"/>
+  <rect x="24.5" y="10" width="13.5" height="4.6" rx="2" fill="#111"/>
+  <circle cx="29" cy="12.3" r="1.2" fill="#fff"/><circle cx="34.5" cy="12.3" r="1.2" fill="#fff"/>
+  <path d="M24 10 A7.4 7 0 0 1 38 10 Z" fill="#111" stroke="${INK}" stroke-width="1.5"/>
+</svg>`;
+const AV_PX = { sm: 26, '': 42, lg: 66, xl: 90 };
+const curTheme = () => (document.body.classList.contains('host-mode') ? S.theme : P.room?.tema) || 'ulat';
+function avatar(c, size = '', theme = curTheme()){
+  if(!AV[theme]) return ulat(c, size);
+  return `<span class="avw ${size}" style="--h:${AV_PX[size] ?? 42}px">${AV[theme](c)}</span>`;
+}
 let toastT;
 function fbErr(err){
   const c = err?.code || '', m = err?.message || String(err);
@@ -806,9 +932,11 @@ D. Pembangkit Listrik Tenaga Sungai
 Jawaban: A`;
 $('#sample-text').textContent = SAMPLE;
 $('#join-ulat').innerHTML = ulat('#7bd36b','lg');
+// beranda: ulat, petugas P2TL, dan pencuri listrik ikut berlari
+$('#hero-run').innerHTML = `<span class="hr-ulat">${ulat('#7bd36b', 'lg')}</span><span class="hr-p2tl">${avatar('#3f7fe0', 'lg', 'p2tl')}</span><span class="hr-thief avw lg" style="--h:70px">${THIEF}</span>`;
 
 /* ---------- State ---------- */
-const S = { questions:[], game:[], time:20, title:'', pin:'', unsubs:[] };
+const S = { questions:[], game:[], time:20, title:'', pin:'', unsubs:[], theme:'ulat' };
 const H = { players:{}, qi:-1, answers:{}, revealed:false, showKey:true, timer:null, deadline:0, ansUnsub:null, prev:{},
   sess:0, sessStart:{}, sessDone:new Set(), sessScores:{}, totalSent:false, sheetQ:Promise.resolve(),
   prevScore:{}, colorOf:{}, order:{}, nextColor:0, palette:shuffle([...PALETTE]), hueOff:0, race:[], raceAll:[], raf:0, raceTimers:[] };
@@ -1010,7 +1138,7 @@ async function createRoom(){
     const num = (id, def) => { const v = parseInt($(id).value, 10); return isNaN(v) ? def : v; };
     S.ptsOk = num('#set-ok', 1000); S.ptsBad = num('#set-bad', -500); S.ptsNone = num('#set-none', -300);
     S.target = Math.max(1, num('#set-target', 40000)); S.repeat = $('#set-repeat').checked;
-    S.time = +$('#set-time').value; S.title = $('#set-title').value.trim() || 'Balapan Ulat';
+    S.time = +$('#set-time').value; S.title = $('#set-title').value.trim() || 'Balapan';
     let pin = '';
     for(let k = 0; k < 15; k++){
       pin = String(Math.floor(1000 + Math.random() * 9000));
@@ -1018,7 +1146,7 @@ async function createRoom(){
     }
     S.pin = pin; document.body.classList.add('host-mode');
     // Hanya info umum yang disimpan di server. Kunci jawaban tetap di perangkat host.
-    await setDoc(roomRef(), { status: 'lobby', title: S.title, sesiTotal: S.sessions, total: S.game.length, duration: S.time, qIndex: -1, createdAt: serverTimestamp() });
+    await setDoc(roomRef(), { status: 'lobby', tema: S.theme, title: S.title, sesiTotal: S.sessions, total: S.game.length, duration: S.time, qIndex: -1, createdAt: serverTimestamp() });
     H.players = {}; H.stat = {}; H.prog = {}; H.scored = new Set(); H.qStats = {}; H.livePos = {}; H.moveT = {};
     H.view = 'dash'; H.playing = false; H.started = false; H.paused = false; H.ansUnsub = null;
     H.deck = S.game.map((_, i) => i); H.round = 1; H.qNo = 0; H.qi = -1; H.log = []; H.played = 0; H.sessPlayed = 0; H.resolved = true; H.result = null;
@@ -1040,7 +1168,7 @@ async function createRoom(){
 function renderLobby(){
   const list = Object.values(H.players).sort((a, b) => (a.joinedAt?.seconds || 0) - (b.joinedAt?.seconds || 0));
   $('#player-count').textContent = list.length;
-  $('#lobby-players').innerHTML = list.map(p => `<button class="chip" data-kick="${p.id}" title="Keluarkan ${esc(p.nama)}">${ulat(pc(p.id), 'sm')}${esc(p.nama)}</button>`).join('');
+  $('#lobby-players').innerHTML = list.map(p => `<button class="chip" data-kick="${p.id}" title="Keluarkan ${esc(p.nama)}">${avatar(pc(p.id), 'sm')}${esc(p.nama)}</button>`).join('');
   $('#lobby-empty').textContent = list.length ? 'Ketuk nama peserta untuk mengeluarkannya.' : 'Belum ada peserta. Bagikan PIN di atas.';
   $('#btn-start-game').disabled = !list.length;
 }
@@ -1154,15 +1282,14 @@ async function resolveQ(){
   H.log.length = Math.min(H.log.length, 30);
   const batch = writeBatch(db);
   Object.keys(delta).forEach(id => { const s = st(id); batch.set(doc(db, 'rooms', S.pin, 'players', id), { score: s.score, benar: s.benar, salah: s.salah, last: delta[id], lastNo: H.qNo }, { merge: true }); });
-  try{ await batch.commit(); await setDoc(roomRef(), { status: 'result', result: res }, { merge: true }); }catch(err){ toast('Gagal menyimpan skor: ' + fbErr(err)); }
+  try{ await batch.commit(); }catch(err){ toast('Gagal menyimpan skor: ' + fbErr(err)); }
   H.played++; H.sessPlayed++;
   scheduleRender(); flyPoints(delta);
+  // Tanpa pemberitahuan hasil: soal langsung pindah, siapa yang tercepat terlihat dari ulat yang bergerak.
   const winner = ranked().find(p => st(p.id).score >= S.target);
-  phaseStart('result', RESULT_MS, () => {
-    if(winner) finishGame('target');
-    else if(H.sessPlayed >= S.per && (S.repeat || H.deck.length)) endSession();
-    else nextQuestion();
-  });
+  if(winner){ phaseStart('result', 1500, () => finishGame('target')); return; }   // beri waktu ulat sampai di daun
+  if(H.sessPlayed >= S.per && (S.repeat || H.deck.length)) endSession();
+  else nextQuestion();
 }
 
 $('#btn-end-sess').addEventListener('click', () => {
@@ -1215,7 +1342,7 @@ function renderDash(){
   $('#dash-players').innerHTML = `<tr><th>#</th><th>Nama</th><th class="num">Benar</th><th class="num">Salah</th><th class="num">Skor</th></tr>` +
     (list.length ? list.map((p, i) => {
       const s = st(p.id), pct = Math.max(0, Math.min(100, s.score / S.target * 100));
-      return `<tr><td>${i + 1}</td><td><span class="nm">${ulat(pc(p.id), 'sm')}${esc(p.nama)}</span><div class="prog"><i style="width:${pct}%"></i></div></td>
+      return `<tr><td>${i + 1}</td><td><span class="nm">${avatar(pc(p.id), 'sm')}${esc(p.nama)}</span><div class="prog"><i style="width:${pct}%"></i></div></td>
         <td class="num">${s.benar}</td><td class="num">${s.salah}</td><td class="num">${fmt(s.score)}</td></tr>`;
     }).join('') : '<tr><td colspan="5" class="muted">Belum ada peserta.</td></tr>');
 }
@@ -1225,32 +1352,15 @@ function renderLive(){
   if(current !== 's-host-screen') return;
   const field = $('#live-track');
   const racers = Object.values(H.players).sort((a, b) => (H.order[a.id] ?? 999) - (H.order[b.id] ?? 999));
-  const key = racers.map(p => p.id).join(',');
-  if(field.dataset.key !== key){
-    field.dataset.key = key;
-    const n = racers.length, sz = n <= 8 ? 24 : n <= 16 ? 20 : n <= 30 ? 16 : 13;
-    field.style.setProperty('--s', sz + 'px');
-    H.fieldW = Math.round(sz * 4.6 + 96);
-    const h = field.clientHeight || 420, top0 = 22, bottom = h - 22 - sz * 2.9;
-    const rowH = sz * 2.3, maxRows = Math.max(1, Math.floor((bottom - top0) / rowH) + 1), rows = Math.min(n || 1, maxRows);
-    field.innerHTML = '<span class="start-line"></span><span class="finish"></span><span class="leaf">🍃</span>' +
-      racers.map((p, i) => {
-        const slot = i % rows, wrap = Math.floor(i / rows);
-        const y = rows > 1 ? top0 + slot * (bottom - top0) / (rows - 1) : (h - sz * 2.9) / 2;
-        const yy = Math.min(bottom, y + (wrap % 2 ? rowH * .45 : 0));
-        const d = (1.4 + Math.random() * 1.4).toFixed(2), dl = (Math.random() * 2).toFixed(2);
-        return `<div class="runner" data-id="${p.id}" style="top:${Math.round(yy)}px;z-index:${10 + Math.round(yy)};left:${posCss(H.livePos[p.id] || 0, H.fieldW)}">
-          <div class="jostle" style="--d:${d}s;--dl:-${dl}s"><span class="tag"><b class="crown-mini">👑</b>${esc(p.nama)}</span>
-          <span class="dust"></span>${ulat(pc(p.id))}</div></div>`;
-      }).join('');
-  }
+  const key = S.theme + '|' + racers.map(p => p.id).join(',');
+  if(field.dataset.key !== key){ field.dataset.key = key; buildField(field, racers); }
   const order = ranked(), leadId = order[0] && st(order[0].id).score > 0 ? order[0].id : null;
   racers.forEach(p => {
     const runner = field.querySelector(`.runner[data-id="${p.id}"]`); if(!runner) return;
     const pos = Math.max(0, Math.min(1, st(p.id).score / S.target)), prev = H.livePos[p.id] ?? 0;
     if(prev !== pos){
       void runner.offsetWidth;
-      runner.style.left = posCss(pos, H.fieldW);
+      if(H.fieldDir === 'v') runner.style.bottom = vPos(pos); else runner.style.left = posCss(pos, H.fieldW);
       runner.classList.add('moving'); runner.classList.toggle('back', pos < prev);
       clearTimeout(H.moveT[p.id]);
       H.moveT[p.id] = setTimeout(() => runner.classList.remove('moving', 'back'), 1400);
@@ -1261,20 +1371,80 @@ function renderLive(){
   $('#live-board').innerHTML = order.slice(0, 12).map((p, i) => {
     const s = st(p.id);
     return `<li class="${i < 3 ? 'top' : ''}"><span class="rk">${i === 0 && leadId ? '👑' : i + 1}</span>
-      <span class="who">${ulat(pc(p.id), 'sm')}<span><b>${esc(p.nama)}</b><small>${s.benar} benar · ${s.salah} salah</small></span></span>
+      <span class="who">${avatar(pc(p.id), 'sm')}<span><b>${esc(p.nama)}</b><small>${s.benar} benar · ${s.salah} salah</small></span></span>
       <span class="pt">${fmt(s.score)}</span></li>`;
   }).join('') + (order.length > 12 ? `<li class="muted">+${order.length - 12} lainnya</li>` : '') || '<li class="muted">Menunggu peserta…</li>';
-  $('#scr-title').textContent = `Balapan Ulat · Sesi ${H.sess + 1}`;
+  $('#scr-title').textContent = `Balapan · Sesi ${H.sess + 1}`;
   $('#scr-done').textContent = `Batas ${fmt(S.target)} poin`;
   const q = S.game[H.qi];
   $('#lq-no').textContent = H.qNo ? `Soal ke-${H.qNo}` : '';
   $('#lq-text').textContent = q ? q.text : 'Menyiapkan soal…';
   $('#lq-opts').innerHTML = q ? q.options.map((o, i) => `<span class="lq-opt o${i}">${SHAPES[i]} ${esc(o)}</span>`).join('') : '';
-  const rb = $('#lq-result');
-  rb.innerHTML = H.resolved ? resultText(H.result) : '';
-  rb.className = 'lq-result ' + (H.resolved ? (H.result?.type || '') : '');
   if(!H.resolved) $('#lq-bar').style.width = '100%';
 }
+// Lapangan: horizontal (ulat, P2TL) atau vertikal (panjat tiang, pemadam)
+const vPos = p => { const v = H.fieldV; return `calc(${v.G}px + (100% - ${v.G + v.T + v.avH}px) * ${Math.max(0, Math.min(1, p)).toFixed(4)})`; };
+function buildField(field, racers){
+  const th = THEMES[S.theme] ? S.theme : 'ulat', dir = THEMES[th].dir;
+  const n = racers.length, sz = n <= 8 ? 24 : n <= 16 ? 20 : n <= 30 ? 16 : 13;
+  field.className = 'race-field racing th-' + th;
+  field.style.setProperty('--s', sz + 'px');
+  H.fieldDir = dir;
+  const w = field.clientWidth || 800, h = field.clientHeight || 420;
+  const tag = p => `<span class="tag"><b class="crown-mini">👑</b>${esc(p.nama)}</span>`;
+  const jig = () => `--d:${(1.4 + Math.random() * 1.4).toFixed(2)}s;--dl:-${(Math.random() * 2).toFixed(2)}s`;
+  const pos = id => Math.max(0, Math.min(1, st(id).score / S.target));
+  if(dir === 'h'){
+    const thiefH = Math.min(150, h * .34), thiefW = thiefH * .96;
+    const avW = th === 'ulat' ? sz * 4.6 : sz * 2.4;
+    H.fieldW = Math.round(avW + (th === 'p2tl' ? thiefW + 34 : 96));
+    const top0 = th === 'p2tl' ? Math.round(h * .2) : 22, bottom = h - 22 - sz * (th === 'ulat' ? 2.9 : 3.6);
+    const rowH = sz * 2.3, maxRows = Math.max(1, Math.floor((bottom - top0) / rowH) + 1), rows = Math.min(n || 1, maxRows);
+    const deco = th === 'p2tl'
+      ? `<div class="houses">🏠 ⚡ 🏡 ⚡ 🏘️ ⚡ 🏠 ⚡ 🏡 ⚡ 🏠 ⚡ 🏘️ ⚡ 🏡</div><span class="start-line"></span><span class="finish" style="right:${Math.round(thiefW + 22)}px"></span>
+         <span class="thief avw" style="--h:${Math.round(thiefH)}px">${THIEF}</span>`
+      : '<span class="start-line"></span><span class="finish"></span><span class="leaf">🍃</span>';
+    field.innerHTML = deco + racers.map((p, i) => {
+      const slot = i % rows, wrap = Math.floor(i / rows);
+      const y = rows > 1 ? top0 + slot * (bottom - top0) / (rows - 1) : (top0 + bottom) / 2;
+      const yy = Math.round(Math.min(bottom, y + (wrap % 2 ? rowH * .45 : 0)));
+      H.livePos[p.id] = pos(p.id);
+      return `<div class="runner" data-id="${p.id}" style="top:${yy}px;z-index:${10 + yy};left:${posCss(H.livePos[p.id], H.fieldW)}">
+        <div class="jostle" style="${jig()}">${tag(p)}<span class="dust"></span>${th === 'ulat' ? ulat(pc(p.id)) : avatar(pc(p.id), '', th)}</div></div>`;
+    }).join('');
+  } else {
+    H.fieldV = { G: 30, T: 70, avH: Math.round(sz * 3.3 + 20) };
+    const pad = 34, span = w - pad * 2;
+    const deco = th === 'pemadam'
+      ? `<div class="bld"></div><div class="flames">${'🔥'.repeat(Math.max(4, Math.ceil(w / 34)))}</div>`
+      : `<div class="wires"></div>`;
+    field.innerHTML = deco + '<span class="top-line"></span>' + racers.map((p, i) => {
+      const x = Math.round(n > 1 ? pad + span * (i + .5) / n : w / 2);
+      H.livePos[p.id] = pos(p.id);
+      return `<span class="col" style="left:${x}px"></span>
+        <div class="runner v" data-id="${p.id}" style="left:${x}px;z-index:${20 + i};bottom:${vPos(H.livePos[p.id])}">
+        <div class="jostle" style="${jig()}">${tag(p)}${avatar(pc(p.id), '', th)}</div></div>`;
+    }).join('');
+  }
+}
+// ganti tampilan kapan saja dari Mode Layar
+function setTheme(t){
+  if(!THEMES[t]) return;
+  S.theme = t;
+  document.querySelectorAll('[name="theme"]').forEach(r => r.checked = r.value === t);
+  const sel = $('#theme-select'); if(sel) sel.value = t;
+  if(S.pin && document.body.classList.contains('host-mode')) setDoc(roomRef(), { tema: t }, { merge: true }).catch(() => {});
+  $('#live-track').dataset.key = '';
+  if(current === 's-host-lobby') renderLobby();
+  scheduleRender();
+}
+$('#theme-pick').innerHTML = Object.entries(THEMES).map(([k, t]) => `
+  <label class="theme-card"><input type="radio" name="theme" value="${k}" ${k === 'ulat' ? 'checked' : ''}>
+    <span class="tc-art">${k === 'ulat' ? ulat('#43c35e', 'sm') : avatar('#3f7fe0', 'sm', k)}</span><span class="tc-name">${t.icon} ${t.name}</span></label>`).join('');
+$('#theme-select').innerHTML = Object.entries(THEMES).map(([k, t]) => `<option value="${k}">${t.icon} ${t.name}</option>`).join('');
+$('#theme-pick').addEventListener('change', e => { if(e.target.name === 'theme') setTheme(e.target.value); });
+$('#theme-select').addEventListener('change', e => setTheme(e.target.value));
+
 function flyPoints(delta){
   if(current !== 's-host-screen') return;
   Object.entries(delta).forEach(([id, pts]) => {
@@ -1320,7 +1490,7 @@ async function closeSession(){
   return rows;
 }
 const podiumHTML = list => {
-  const step = (r, n) => r ? `<div class="step p${n}">${n === 1 ? '<span class="crown">👑</span>' : ''}${ulat(pc(r.id), n === 1 ? 'xl' : 'lg')}
+  const step = (r, n) => r ? `<div class="step p${n}">${n === 1 ? '<span class="crown">👑</span>' : ''}${avatar(pc(r.id), n === 1 ? 'xl' : 'lg')}
       <span class="nm">${esc(r.nama)}</span><span class="pts">${fmt(r.pts)} poin</span><div class="blk">${n}</div></div>` : '<div></div>';
   return step(list[1], 2) + step(list[0], 1) + step(list[2], 3);
 };
@@ -1471,7 +1641,7 @@ function renderWait(mode){
   } else if(mode === 'timeout'){
     box.innerHTML = `<div class="big-icon">⏱</div><p class="fb-title">Waktu habis</p><p class="muted">Bersiap untuk soal berikutnya.</p>`;
   } else {
-    box.innerHTML = `${ulat(P.color, 'xl')}<p class="fb-title">Kamu sudah masuk!</p>
+    box.innerHTML = `${avatar(P.color, 'xl')}<p class="fb-title">Kamu sudah masuk!</p>
       <p class="muted">Cari namamu di layar host. Lomba dimulai sebentar lagi.</p>
       <span class="stat">${P.all.length || 1} peserta di ruangan</span>`;
   }
@@ -1522,14 +1692,14 @@ function renderFeedback(){
     box.className = 'p-card ' + (good ? 'fb-ok' : (mine || r.type === 'none') ? 'fb-bad' : '');
     const target = d.target || 1, prog = Math.max(0, Math.min(1, (me?.score || 0) / target));
     box.innerHTML = `<div class="big-icon">${icon}</div><p class="fb-title">${title}</p><p>${sub}</p>
-      <div class="mini-track"><span class="leaf">🍃</span><div class="runner" style="left:${posCss(prog, 90)}">${ulat(P.color, 'sm')}</div></div>
+      <div class="mini-track"><span class="leaf">🍃</span><div class="runner" style="left:${posCss(prog, 90)}">${avatar(P.color, 'sm')}</div></div>
       <div class="stat-row"><span class="stat">Peringkat ${myRank()} dari ${P.all.length}</span><span class="stat">${fmtP(me?.score)} / ${fmtP(target)} poin</span></div>`;
     return;
   }
   if(!me || me.sesiNo !== d.sesiNo){ box.className = 'p-card'; box.innerHTML = `<div class="big-icon">⏳</div><p class="fb-title">Menghitung peringkat…</p>`; return; }
   const r = me.sesiRank, medal = r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : '🏁';
   box.className = 'p-card';
-  box.innerHTML = `<div class="big-icon">${medal}</div>${ulat(P.color, 'lg')}<p class="fb-title">Sesi ${d.sesiNo} selesai!</p>
+  box.innerHTML = `<div class="big-icon">${medal}</div>${avatar(P.color, 'lg')}<p class="fb-title">Sesi ${d.sesiNo} selesai!</p>
     <div class="stat-row"><span class="stat">Peringkat sesi ${r} dari ${me.sesiJumlah}</span><span class="stat">${fmtP(me.sesiSkor)} poin sesi ini</span></div>
     <div class="stat-row"><span class="stat">Total ${fmtP(me.score)} poin</span><span class="stat">Peringkat total ${myRank()}</span></div>
     <p class="muted">Sesi berikutnya dimulai saat host melanjutkan.</p>`;
@@ -1540,7 +1710,7 @@ window.__appReady = true;
 function renderEnd(){
   const me = P.me || {}, r = myRank();
   const medal = r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : '🏁';
-  $('#pe-box').innerHTML = `<div class="big-icon">${medal}</div>${ulat(P.color, 'xl')}
+  $('#pe-box').innerHTML = `<div class="big-icon">${medal}</div>${avatar(P.color, 'xl')}
     <p class="fb-title">Lomba selesai!</p>
     ${P.room?.winner ? `<p>🏁 ${esc(P.room.winner)} mencapai batas poin</p>` : ''}
     <div class="stat-row"><span class="stat">Peringkat ${r} dari ${P.all.length}</span>
