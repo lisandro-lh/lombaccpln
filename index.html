@@ -1,228 +1,1120 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kuis Cerdas Cermat - PLN Tobelo</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .btn-answer { transition: transform 0.1s; }
-        .btn-answer:active { transform: scale(0.95); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Balapan Ulat · Kuis Cerdas Cermat PLN UP3 Tobelo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<!-- Pembaca PDF & Word -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<style>
+:root{
+  --ink:#17324d; --ink-soft:#4b6178; --paper:#ffffff; --sky:#a8dcff; --sky2:#e3f4ff;
+  --grass:#6cc04a; --grass-d:#4a9a2e; --soil:#c58b4e; --soil-d:#9a6533;
+  --yellow:#ffd400; --yellow-d:#d9a800; --pln:#0a6ebd;
+  --ok:#2c9a46; --bad:#e8483b;
+  --o0:#e8483b; --o1:#1f74d6; --o2:#d99a00; --o3:#2c9a46; --o4:#8a55d6;
+  --line:3px solid var(--ink); --pop:5px 5px 0 var(--ink);
+  --display:'Baloo 2','Trebuchet MS',system-ui,sans-serif;
+  --body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit;margin:0}
+html{background:var(--sky)}
+body{
+  min-height:100vh; font-family:var(--body); color:var(--ink); font-weight:700;
+  background:
+    radial-gradient(ellipse 60% 30% at 15% 8%, #fff8 0 40%, transparent 41%),
+    radial-gradient(ellipse 40% 20% at 85% 14%, #fff7 0 40%, transparent 41%),
+    linear-gradient(180deg, var(--sky) 0%, var(--sky2) 70%, #d6f3c4 100%);
+  background-attachment:fixed;
+}
+body::after{ /* rumput di dasar layar */
+  content:""; position:fixed; left:0; right:0; bottom:0; height:70px; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(circle at 20px -6px, transparent 22px, var(--grass) 23px) 0 0/40px 70px repeat-x;
+  border-top:0; opacity:.9;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--pln);outline-offset:3px}
+
+.app{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 16px 90px}
+.screen{display:none;flex-direction:column;gap:18px;min-height:calc(100vh - 110px)}
+.screen.active{display:flex}
+
+h1,h2,h3{font-family:var(--display);line-height:1.05}
+.bar{display:grid;grid-template-columns:minmax(90px,auto) 1fr minmax(90px,auto);align-items:center;gap:12px}
+.bar h2{text-align:center;font-size:clamp(20px,2.8vw,30px)}
+.bar .right{justify-self:end}
+.back{
+  background:var(--paper);border:var(--line);box-shadow:3px 3px 0 var(--ink);
+  border-radius:999px;padding:8px 16px;font-weight:800;font-size:15px;white-space:nowrap;
+}
+.back:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.card{background:var(--paper);border:var(--line);box-shadow:var(--pop);border-radius:22px;padding:20px}
+.cta{
+  font-family:var(--display);font-size:22px;font-weight:800;
+  background:var(--yellow);border:var(--line);box-shadow:var(--pop);border-radius:18px;padding:14px 26px;
+  transition:transform .08s, box-shadow .08s;
+}
+.cta:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.cta:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:var(--pop)}
+.ghost{background:var(--paper);border:var(--line);border-radius:12px;padding:8px 12px;font-weight:800;box-shadow:3px 3px 0 var(--ink)}
+.muted{color:var(--ink-soft);font-weight:600}
+
+/* ---------- Ulat ---------- */
+.ulat{--s:18px;--c:#7bd36b;display:inline-flex;align-items:flex-end;padding-top:calc(var(--s)*.5)}
+.ulat i{
+  width:var(--s);height:var(--s);border-radius:50%;background:var(--c);
+  border:2px solid var(--ink);margin-right:calc(var(--s)*-.32);
+  box-shadow:inset 0 calc(var(--s)*-.2) 0 rgba(0,0,0,.15), inset calc(var(--s)*.15) calc(var(--s)*.12) 0 rgba(255,255,255,.4);
+  animation:crawl .75s ease-in-out infinite;
+}
+.ulat i:nth-child(1){animation-delay:-.6s}.ulat i:nth-child(2){animation-delay:-.45s}
+.ulat i:nth-child(3){animation-delay:-.3s}.ulat i:nth-child(4){animation-delay:-.15s}
+.ulat .head{
+  position:relative;width:calc(var(--s)*1.4);height:calc(var(--s)*1.4);border-radius:50%;
+  background:var(--c);border:2px solid var(--ink);animation:crawl .75s ease-in-out infinite;
+  box-shadow:inset calc(var(--s)*.15) calc(var(--s)*.12) 0 rgba(255,255,255,.4);
+}
+.ulat .head::before,.ulat .head::after{
+  content:"";position:absolute;top:calc(var(--s)*-.42);width:calc(var(--s)*.3);height:calc(var(--s)*.3);
+  border-radius:50%;background:var(--ink);
+}
+.ulat .head::before{left:12%}.ulat .head::after{right:6%}
+.ulat .head em{position:absolute;top:26%;width:30%;height:34%;background:#fff;border-radius:50%;border:1.5px solid var(--ink)}
+.ulat .head em:first-child{left:22%}.ulat .head em:nth-child(2){right:12%}
+.ulat .head em::after{content:"";position:absolute;right:8%;top:30%;width:50%;height:50%;border-radius:50%;background:var(--ink)}
+.ulat .head u{position:absolute;left:38%;bottom:16%;width:38%;height:22%;border-bottom:2px solid var(--ink);border-radius:0 0 50% 50%}
+.ulat.sm{--s:11px}.ulat.lg{--s:30px}.ulat.xl{--s:40px}
+@keyframes crawl{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(var(--s)*-.38))}}
+@media (prefers-reduced-motion:reduce){.ulat i,.ulat .head,.hero-ulat{animation:none!important}}
+
+/* ---------- Beranda ---------- */
+.hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center}
+.hero h1{font-size:clamp(52px,10vw,104px);letter-spacing:-.01em;color:var(--ink);text-shadow:4px 4px 0 var(--yellow)}
+.hero .tagline{font-size:clamp(16px,2.2vw,21px);color:var(--ink-soft);max-width:34ch}
+.hero-track{width:min(560px,92vw);height:58px;position:relative;border-bottom:4px dashed var(--soil-d)}
+.hero-ulat{position:absolute;bottom:2px;left:0;animation:stroll 9s linear infinite}
+.hero-track .leaf{position:absolute;right:-6px;bottom:2px;font-size:34px}
+@keyframes stroll{from{left:0}to{left:calc(100% - 120px)}}
+.menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;width:min(620px,100%)}
+.big-btn{
+  text-align:left;border:var(--line);box-shadow:var(--pop);border-radius:22px;padding:18px 20px;
+  font-family:var(--display);font-size:24px;font-weight:800;display:flex;flex-direction:column;gap:2px;
+}
+.big-btn small{font-family:var(--body);font-size:14px;font-weight:700;opacity:.85}
+.big-btn.host{background:var(--pln);color:#fff}
+.big-btn.player{background:var(--grass);color:var(--ink)}
+.big-btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.link-btn{background:none;border:0;text-decoration:underline;text-underline-offset:4px;font-weight:800;color:var(--ink)}
+@media (max-width:560px){.menu{grid-template-columns:1fr}}
+
+/* ---------- Cara main ---------- */
+.help{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.help ol{padding-left:20px;display:grid;gap:8px;font-weight:600}
+.help h3{font-size:24px;margin-bottom:10px}
+pre.sample{background:#f3f8fc;border:2px dashed var(--ink-soft);border-radius:14px;padding:14px;font-size:14px;white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;font-weight:600;max-height:320px;overflow:auto}
+
+/* ---------- Setup host ---------- */
+.setup{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:18px;align-items:start}
+@media (max-width:860px){.setup{grid-template-columns:1fr}}
+.drop{
+  display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;
+  border:3px dashed var(--ink);border-radius:18px;padding:26px 16px;background:#f3f8fc;cursor:pointer;
+}
+.drop.over{background:#fff7c2}
+.drop .ic{font-size:40px}
+.drop b{font-size:18px}
+.status{margin-top:12px;padding:10px 12px;border-radius:12px;font-weight:700;display:none}
+.status.ok,.status.err,.status.load{display:block}
+.status.ok{background:#e3f6e7;border:2px solid var(--ok)}
+.status.err{background:#fde7e5;border:2px solid var(--bad)}
+.status.load{background:#eef4fb;border:2px solid var(--pln)}
+details{margin-top:14px}
+summary{cursor:pointer;font-weight:800}
+textarea{width:100%;margin-top:10px;border:2px solid var(--ink);border-radius:12px;padding:10px;font-weight:600;font-size:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn-sm{background:var(--paper);border:2px solid var(--ink);border-radius:10px;padding:7px 12px;font-weight:800;box-shadow:2px 2px 0 var(--ink)}
+.btn-sm.yellow{background:var(--yellow)}
+.field{display:grid;gap:6px;margin-top:14px}
+.field input,.field select{border:2px solid var(--ink);border-radius:12px;padding:10px 12px;font-weight:700;background:#fff}
+.preview-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.preview-head h3{font-size:24px}
+.keymode{background:var(--ink);color:var(--yellow);border-radius:999px;padding:4px 12px;font-size:13px}
+#q-list{list-style:none;padding:0;display:grid;gap:12px;max-height:62vh;overflow:auto;padding-right:4px}
+.pq{border:2px solid var(--ink);border-radius:16px;padding:12px;background:#fff}
+.pq.nokey{border-color:var(--bad);background:#fff6f5}
+.pq-head{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start}
+.pq-no{background:var(--ink);color:#fff;border-radius:10px;min-width:32px;text-align:center;padding:2px 6px;font-family:var(--display)}
+.pq-head p{font-weight:700}
+.icon-btn{background:none;border:0;font-size:18px;padding:2px 6px}
+.pq-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:10px}
+@media (max-width:520px){.pq-opts{grid-template-columns:1fr}}
+.pq-opt{text-align:left;border:2px solid #cfd8e3;background:#f7f9fc;border-radius:10px;padding:6px 10px;font-weight:600;font-size:14px}
+.pq-opt b{display:inline-block;min-width:20px}
+.pq-opt.key{border-color:var(--ok);background:#e3f6e7;font-weight:800}
+.pq-opt.key::after{content:" ✓"}
+.warn{color:var(--bad);display:block;margin-top:6px}
+.setup-actions{display:flex;justify-content:flex-end}
+
+/* ---------- Lobi host ---------- */
+.pin-board{text-align:center;display:grid;gap:8px;justify-items:center}
+.pin{
+  font-family:var(--display);font-size:clamp(70px,14vw,140px);font-weight:800;letter-spacing:.12em;line-height:1;
+  background:var(--paper);border:var(--line);box-shadow:8px 8px 0 var(--ink);border-radius:26px;padding:10px 30px 0;
+}
+.join-url{font-size:15px;color:var(--ink-soft);word-break:break-all}
+.lobby-count{text-align:center;font-family:var(--display);font-size:24px}
+.lobby-players{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;min-height:60px}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;background:var(--paper);border:2px solid var(--ink);
+  border-radius:999px;padding:4px 14px 4px 8px;font-weight:800;animation:pop .3s ease;
+}
+.chip:hover{background:#fff1f0}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.empty{color:var(--ink-soft);text-align:center;font-weight:700}
+.center{display:flex;justify-content:center}
+
+/* ---------- Soal di layar host ---------- */
+.q-wrap{display:grid;gap:16px;flex:1}
+.q-top{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+.q-text{font-family:var(--display);font-size:clamp(24px,3.6vw,42px);line-height:1.15;background:var(--paper);border:var(--line);box-shadow:var(--pop);border-radius:22px;padding:22px 24px}
+.timer{position:relative;width:110px;height:110px}
+.timer svg{width:100%;height:100%;transform:rotate(-90deg)}
+.timer circle{fill:none;stroke-width:10}
+.timer .trk{stroke:#fff;stroke-opacity:.8}
+.timer .bar{stroke:var(--pln);stroke-linecap:round;transition:stroke-dashoffset .2s linear}
+.timer.hurry .bar{stroke:var(--bad)}
+.timer span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:40px}
+.answered{font-family:var(--display);font-size:20px;text-align:center}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.opt{
+  position:relative;display:flex;align-items:center;gap:14px;color:#fff;border:var(--line);box-shadow:var(--pop);
+  border-radius:18px;padding:18px 18px;min-height:86px;font-size:clamp(18px,2.2vw,26px);font-weight:800;
+  transition:opacity .3s, transform .3s;
+}
+.opt .shape{font-size:30px;width:40px;text-align:center;flex:none;text-shadow:2px 2px 0 rgba(0,0,0,.25)}
+.opt .otext{flex:1}
+.o0{background:var(--o0)}.o1{background:var(--o1)}.o2{background:var(--o2)}.o3{background:var(--o3)}.o4{background:var(--o4)}
+.opts .opt.o4:last-child:nth-child(odd){grid-column:1/-1}
+.keybadge{display:none;background:var(--yellow);color:var(--ink);border:2px solid var(--ink);border-radius:999px;padding:2px 10px;font-size:14px}
+.show-key .opt.is-key .keybadge{display:inline-block}
+.cnt{display:none;background:rgba(0,0,0,.25);border-radius:999px;padding:2px 12px;font-size:16px}
+.revealed .opt:not(.is-key){opacity:.35}
+.revealed .opt.is-key{transform:scale(1.02)}
+.revealed .opt.is-key .keybadge{display:inline-block}
+.revealed .cnt{display:inline-block}
+.keybox{display:none;background:var(--ink);color:#fff;border-radius:16px;padding:12px 16px;font-weight:700}
+.keybox b{color:var(--yellow)}
+.show-key .keybox{display:block}
+.q-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+@media (max-width:640px){.opts{grid-template-columns:1fr}.q-top{grid-template-columns:1fr;justify-items:center}}
+
+/* ---------- Arena balapan ---------- */
+.track{
+  background:linear-gradient(180deg,#8fd46b,#6cc04a);border:var(--line);box-shadow:var(--pop);border-radius:24px;
+  padding:14px;display:grid;gap:10px;
+}
+.lane{display:grid;grid-template-columns:44px 1fr 80px;gap:10px;align-items:center}
+.rank{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid var(--ink);font-family:var(--display);font-size:20px}
+.rank.r1{background:var(--yellow)}.rank.r2{background:#dfe6ee}.rank.r3{background:#e7b98a}
+.road{
+  position:relative;height:66px;border-radius:14px;border:2px solid var(--ink);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 28px, rgba(255,255,255,.35) 28px 40px) center/100% 3px no-repeat,
+    linear-gradient(180deg,var(--soil),var(--soil-d));
+  overflow:hidden;
+}
+.road .leaf{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:32px}
+.road .finish{position:absolute;right:52px;top:0;bottom:0;width:8px;
+  background:repeating-linear-gradient(180deg,#fff 0 8px,var(--ink) 8px 16px);opacity:.85}
+.runner{position:absolute;bottom:6px;left:0;display:flex;flex-direction:column;align-items:flex-start;gap:0;
+  transition:left 2s cubic-bezier(.25,.9,.3,1)}
+.runner .tag{background:#fff;border:2px solid var(--ink);border-radius:999px;padding:0 9px;font-size:13px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.runner .tag em{font-style:normal;color:var(--ok)}
+.sc{font-family:var(--display);font-size:22px;text-align:right;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:2px 8px}
+.more{text-align:center;font-weight:800;color:var(--ink)}
+@media (max-width:600px){.lane{grid-template-columns:34px 1fr 60px}.rank{width:32px;height:32px;font-size:16px}.sc{font-size:16px}}
+
+/* ---------- Podium ---------- */
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:end;max-width:760px;margin:0 auto;width:100%}
+.step{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.step .nm{font-family:var(--display);font-size:22px;line-height:1.1;word-break:break-word}
+.step .blk{width:100%;border:var(--line);box-shadow:var(--pop);border-radius:18px 18px 6px 6px;display:grid;place-items:center;font-family:var(--display);font-size:44px;padding-top:6px}
+.step.p1 .blk{height:180px;background:var(--yellow)}
+.step.p2 .blk{height:130px;background:#dfe6ee}
+.step.p3 .blk{height:100px;background:#e7b98a}
+.step .pts{font-weight:800}
+.crown{font-size:34px;line-height:1}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;text-align:left;border-bottom:2px solid #e3e9f0}
+th{font-family:var(--display);font-size:18px}
+td.num,th.num{text-align:right}
+.end-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+
+/* ---------- Peserta ---------- */
+.p-card{background:var(--paper);border:var(--line);box-shadow:var(--pop);border-radius:24px;padding:24px;text-align:center;display:grid;gap:12px;justify-items:center}
+.join-form{max-width:440px;width:100%;margin:0 auto;display:grid;gap:14px}
+.join-form input{
+  width:100%;text-align:center;border:var(--line);border-radius:16px;padding:14px;background:#fff;
+  font-family:var(--display);font-size:26px;font-weight:800;
+}
+.join-form #input-pin{font-size:40px;letter-spacing:.3em}
+.p-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.p-head .info{font-family:var(--display);font-size:20px}
+.ptimer{height:12px;border:2px solid var(--ink);border-radius:999px;background:#fff;overflow:hidden}
+.ptimer div{height:100%;background:var(--pln);transition:width .2s linear}
+.pq-text{font-family:var(--display);font-size:clamp(20px,5.2vw,30px);line-height:1.2;background:#fff;border:var(--line);border-radius:18px;padding:14px 16px}
+.pbtns{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-height:46vh}
+.pbtn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#fff;
+  border:var(--line);box-shadow:var(--pop);border-radius:20px;padding:12px;font-weight:800;font-size:clamp(15px,4vw,20px);
+}
+.pbtn .shape{font-size:clamp(34px,10vw,52px);line-height:1;text-shadow:2px 2px 0 rgba(0,0,0,.25)}
+.pbtn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.pbtns.n5 .pbtn:last-child{grid-column:1/-1}
+.pbtns.n3 .pbtn:last-child{grid-column:1/-1}
+.big-icon{font-size:72px;line-height:1}
+.fb-ok{background:#e3f6e7}.fb-bad{background:#fde7e5}
+.fb-title{font-family:var(--display);font-size:40px}
+.mini-track{width:100%;max-width:420px;height:58px;position:relative;border-radius:12px;border:2px solid var(--ink);background:linear-gradient(180deg,var(--soil),var(--soil-d));overflow:hidden}
+.mini-track .runner{bottom:4px}
+.mini-track .leaf{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:26px}
+.stat-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.stat{background:#f3f8fc;border:2px solid var(--ink);border-radius:14px;padding:6px 14px;font-weight:800}
+
+/* ---------- Toast ---------- */
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(140%);z-index:20;
+  background:var(--ink);color:#fff;border-radius:14px;padding:12px 18px;font-weight:700;max-width:90vw;transition:transform .25s}
+#toast.on{transform:translateX(-50%) translateY(0)}
+[hidden]{display:none!important}
+</style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans text-gray-800">
+<body>
+<div class="app">
 
-    <!-- Container Utama -->
-    <div id="app" class="max-w-3xl mx-auto p-4 pt-10">
-        
-        <!-- LAYAR 1: MENU UTAMA -->
-        <div id="screen-home" class="text-center space-y-6 bg-white p-8 rounded-xl shadow-lg mt-10">
-            <h1 class="text-3xl font-bold text-blue-600">⚡ Kuis Cerdas Cermat PLN</h1>
-            <p class="text-gray-500">Pilih mode masuk:</p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button onclick="showScreen('screen-host')" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">👨‍🏫 Masuk sebagai Host</button>
-                <button onclick="showScreen('screen-player-login')" class="px-6 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600">📱 Masuk sebagai Peserta</button>
-            </div>
-        </div>
-
-        <!-- LAYAR 2: LOGIN PESERTA -->
-        <div id="screen-player-login" class="hidden text-center space-y-4 bg-white p-8 rounded-xl shadow-lg mt-10">
-            <h2 class="text-2xl font-bold">Gabung Kuis</h2>
-            <input type="text" id="input-pin" placeholder="PIN Kuis (4 Digit)" class="w-full text-center p-3 border-2 border-gray-300 rounded text-2xl font-bold uppercase" maxlength="4">
-            <input type="text" id="input-nama" placeholder="Nama Anda" class="w-full text-center p-3 border-2 border-gray-300 rounded text-xl">
-            <button id="btn-join" class="w-full py-3 bg-green-500 text-white rounded-lg font-bold text-xl hover:bg-green-600">GABUNG SEKARANG</button>
-            <button onclick="showScreen('screen-home')" class="text-sm text-gray-400 mt-4 block mx-auto">Kembali</button>
-        </div>
-
-        <!-- LAYAR 3: HOST DASHBOARD -->
-        <div id="screen-host" class="hidden space-y-6 bg-white p-8 rounded-xl shadow-lg">
-            <h2 class="text-2xl font-bold text-blue-600">Dashboard Host</h2>
-            
-            <!-- Simulasi Upload Soal / Generate -->
-            <div class="bg-blue-50 p-4 rounded border border-blue-200">
-                <h3 class="font-bold mb-2">1. Siapkan Soal</h3>
-                <textarea id="host-soal" rows="4" class="w-full p-2 border rounded text-sm mb-2" placeholder="Ketik soal atau paste teks materi di sini (Nantinya bisa dikembangkan untuk otomatis generate soal pakai AI)"></textarea>
-                <button id="btn-create-room" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-full font-bold">Buat Ruang Kuis (Generate PIN)</button>
-            </div>
-
-            <!-- PIN & Pemain -->
-            <div id="host-lobby-info" class="hidden text-center">
-                <p class="text-lg">PIN RUANGAN ANDA:</p>
-                <h1 id="display-pin" class="text-6xl font-black text-gray-800 tracking-widest my-4">----</h1>
-                <p>Menunggu peserta bergabung... (<span id="player-count">0</span> Orang)</p>
-                <ul id="list-players" class="flex flex-wrap justify-center gap-2 mt-4 text-sm font-bold text-blue-800"></ul>
-                <button id="btn-start-game" class="mt-6 w-full py-3 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600">MULAI KUIS</button>
-            </div>
-        </div>
-
-        <!-- LAYAR 4: GAME AREA (PLAYER) -->
-        <div id="screen-game-player" class="hidden text-center flex-col h-[80vh] justify-center space-y-4">
-            <h2 class="text-xl font-bold mb-4">Lihat Layar Host! Pilih Jawabanmu:</h2>
-            <div class="grid grid-cols-2 gap-4 h-full">
-                <button onclick="submitAnswer('A')" class="btn-answer bg-red-500 text-white text-3xl rounded-xl shadow-[0_8px_0_#991b1b]"></button>
-                <button onclick="submitAnswer('B')" class="btn-answer bg-blue-500 text-white text-3xl rounded-xl shadow-[0_8px_0_#1e40af]"></button>
-                <button onclick="submitAnswer('C')" class="btn-answer bg-yellow-400 text-white text-3xl rounded-xl shadow-[0_8px_0_#a16207]"></button>
-                <button onclick="submitAnswer('D')" class="btn-answer bg-green-500 text-white text-3xl rounded-xl shadow-[0_8px_0_#166534]"></button>
-            </div>
-        </div>
-
-        <!-- LAYAR 5: SELESAI / EKSPOR -->
-        <div id="screen-result" class="hidden text-center bg-white p-8 rounded-xl shadow-lg mt-10 space-y-4">
-            <h2 class="text-3xl font-bold text-green-600">Kuis Selesai! 🎉</h2>
-            <p id="final-score" class="text-xl font-bold text-gray-700"></p>
-            
-            <!-- Tombol Kirim ke Spreadsheet -->
-            <button id="btn-export-sheet" class="mt-4 px-6 py-3 bg-green-600 text-white rounded font-bold hover:bg-green-700 shadow flex items-center justify-center mx-auto gap-2">
-                📊 Sinkronisasi Nilai ke Spreadsheet
-            </button>
-            <p id="export-status" class="text-sm text-gray-500 hidden mt-2">Data berhasil dikirim!</p>
-        </div>
-
+  <!-- ============ BERANDA ============ -->
+  <section id="s-home" class="screen active">
+    <div class="hero">
+      <div class="hero-track" aria-hidden="true">
+        <div class="hero-ulat"><div class="ulat lg" style="--c:#7bd36b"><i></i><i></i><i></i><i></i><b class="head"><em></em><em></em><u></u></b></div></div>
+        <span class="leaf">🍃</span>
+      </div>
+      <h1>Balapan Ulat</h1>
+      <p class="tagline">Kuis cerdas cermat PLN UP3 Tobelo. Jawab benar dan cepat, ulatmu makin dekat ke daun.</p>
+      <div class="menu">
+        <button class="big-btn host" data-go="s-host-setup">🎤 Host<small>Upload soal dan pandu lomba</small></button>
+        <button class="big-btn player" data-go="s-join">📱 Peserta<small>Gabung pakai PIN dari host</small></button>
+      </div>
+      <button class="link-btn" data-go="s-help">Cara main dan format soal</button>
     </div>
+  </section>
 
-    <!-- FIREBASE & LOGIC SCRIPT -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+  <!-- ============ CARA MAIN ============ -->
+  <section id="s-help" class="screen">
+    <header class="bar"><button class="back" data-back>← Kembali</button><h2>Cara Main</h2><span></span></header>
+    <div class="help">
+      <div class="card">
+        <h3>Untuk host</h3>
+        <ol>
+          <li>Pilih <b>Host</b>, lalu upload file soal (PDF, Word .docx, atau .txt).</li>
+          <li>Cek pratinjau. Kunci jawaban ditandai hijau. Klik pilihan lain untuk mengganti kunci.</li>
+          <li>Tekan <b>Buat ruangan</b>. Tampilkan PIN di proyektor.</li>
+          <li>Setelah peserta masuk, tekan <b>Mulai lomba</b>.</li>
+          <li>Tiap soal selesai, tampilkan jawaban lalu lihat balapan ulat.</li>
+          <li>Di akhir, unduh nilai (CSV) atau kirim ke spreadsheet.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>Untuk peserta</h3>
+        <ol>
+          <li>Buka alamat yang sama di HP, pilih <b>Peserta</b>.</li>
+          <li>Masukkan PIN 4 angka dan nama.</li>
+          <li>Soal dan pilihan muncul di HP. Pilih jawaban secepatnya.</li>
+          <li>Makin cepat menjawab benar, makin besar poin (maks. 1000). Benar 3× beruntun dapat bonus 100.</li>
+        </ol>
+        <p class="muted" style="margin-top:12px">Kunci jawaban tidak pernah dikirim ke HP peserta. Peserta hanya melihat soal dan pilihan.</p>
+      </div>
+      <div class="card" style="grid-column:1/-1">
+        <h3>Format soal di file</h3>
+        <p class="muted" style="margin-bottom:10px">Nomor soal, pilihan A–D (boleh sampai E), lalu baris kunci. Kunci juga bisa ditulis <b>Kunci: B</b>, tanda bintang di pilihan (<b>*C. teks</b>), atau tabel “Kunci Jawaban” di akhir dokumen (1. A, 2. C, …).</p>
+        <pre class="sample" id="sample-text"></pre>
+        <div class="row" style="margin-top:12px">
+          <button class="btn-sm yellow" id="btn-dl-template">⬇ Unduh contoh format (.txt)</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        // Konfigurasi dari Anda
-        const firebaseConfig = {
-            apiKey: "AIzaSyAXbg44BtfEc6tPU3X3mzUU4xnfm-Z52xk",
-            authDomain: "lombacerdsa-cermat-pln.firebaseapp.com",
-            projectId: "lombacerdsa-cermat-pln",
-            storageBucket: "lombacerdsa-cermat-pln.firebasestorage.app",
-            messagingSenderId: "925030222685",
-            appId: "1:925030222685:web:ba49e175056505881d36b4",
-            measurementId: "G-CLEP11LDMQ"
-        };
+  <!-- ============ SETUP HOST ============ -->
+  <section id="s-host-setup" class="screen">
+    <header class="bar"><button class="back" data-back>← Kembali</button><h2>Siapkan Soal</h2><span></span></header>
+    <div class="setup">
+      <div class="card">
+        <label class="drop" id="drop">
+          <input type="file" id="file-input" accept=".pdf,.docx,.txt" hidden>
+          <span class="ic">📄</span>
+          <b>Klik atau seret file soal ke sini</b>
+          <span class="muted">PDF, Word (.docx), atau .txt berisi soal, pilihan, dan kunci</span>
+        </label>
+        <div id="file-status" class="status"></div>
+        <details>
+          <summary>Tempel teks soal secara manual</summary>
+          <textarea id="paste-text" rows="7" placeholder="1. Pertanyaan...&#10;A. ...&#10;B. ...&#10;C. ...&#10;D. ...&#10;Jawaban: A"></textarea>
+          <div class="row" style="margin-top:8px"><button class="btn-sm" id="btn-parse-text">Baca teks</button></div>
+        </details>
+        <div class="row" style="margin-top:14px"><button class="btn-sm" id="btn-sample">Coba dengan soal contoh</button></div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        <label class="field">Nama lomba
+          <input id="set-title" value="Cerdas Cermat PLN UP3 Tobelo" maxlength="60">
+        </label>
+        <label class="field">Waktu per soal
+          <select id="set-time">
+            <option value="10">10 detik</option><option value="15">15 detik</option>
+            <option value="20" selected>20 detik</option><option value="30">30 detik</option>
+            <option value="45">45 detik</option><option value="60">60 detik</option>
+          </select>
+        </label>
+      </div>
 
-        // --- GANTI URL INI DENGAN WEB APP URL GOOGLE SCRIPT ANDA ---
-        const GOOGLE_SHEETS_URL = "URL_WEB_APP_GOOGLE_APPS_SCRIPT_ANDA_DISINI";
+      <div class="card" id="preview-card" hidden>
+        <div class="preview-head">
+          <h3>Pratinjau <span id="q-count"></span></h3>
+          <span class="keymode">🔑 Mode jawaban · hanya host</span>
+        </div>
+        <p class="muted" style="margin-bottom:12px">Klik pilihan untuk menjadikannya kunci jawaban.</p>
+        <ol id="q-list"></ol>
+      </div>
+    </div>
+    <div class="setup-actions"><button class="cta" id="btn-create-room" disabled>Buat ruangan</button></div>
+  </section>
 
-        // State Global
-        let currentPin = "";
-        let playerName = "";
-        let playerScore = 0;
+  <!-- ============ LOBI HOST ============ -->
+  <section id="s-host-lobby" class="screen">
+    <header class="bar"><button class="back" data-back>✕ Tutup ruangan</button><h2 id="lobby-title"></h2><span></span></header>
+    <div class="pin-board">
+      <p class="muted">Buka halaman ini di HP, pilih <b>Peserta</b>, lalu masukkan PIN</p>
+      <div class="pin" id="display-pin">----</div>
+      <p class="join-url" id="join-url"></p>
+    </div>
+    <div class="lobby-count"><span id="player-count">0</span> peserta siap balapan</div>
+    <div class="lobby-players" id="lobby-players"></div>
+    <p class="empty" id="lobby-empty">Belum ada peserta. Ketuk nama peserta untuk mengeluarkannya.</p>
+    <div class="center"><button class="cta" id="btn-start-game" disabled>Mulai lomba 🏁</button></div>
+  </section>
 
-        // Fungsi Pindah Layar
-        window.showScreen = function(screenId) {
-            document.querySelectorAll('#app > div').forEach(el => el.classList.add('hidden'));
-            document.getElementById(screenId).classList.remove('hidden');
-            if(screenId === 'screen-game-player') {
-                document.getElementById('screen-game-player').classList.add('flex');
-            } else {
-                document.getElementById('screen-game-player').classList.remove('flex');
-            }
+  <!-- ============ SOAL (HOST) ============ -->
+  <section id="s-host-q" class="screen show-key">
+    <header class="bar">
+      <button class="back" data-back>✕ Akhiri</button>
+      <h2>Soal <span id="hq-num"></span></h2>
+      <button class="ghost right" id="btn-toggle-key">🙈 Sembunyikan kunci</button>
+    </header>
+    <div class="q-wrap">
+      <div class="q-top">
+        <div class="q-text" id="hq-text"></div>
+        <div>
+          <div class="timer" id="hq-timer">
+            <svg viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="44"/><circle class="bar" id="hq-ring" cx="50" cy="50" r="44"/></svg>
+            <span id="hq-sec">20</span>
+          </div>
+          <div class="answered"><span id="hq-answered">0/0</span><br><small class="muted">sudah menjawab</small></div>
+        </div>
+      </div>
+      <div class="opts" id="hq-opts"></div>
+      <div class="keybox" id="hq-key">🔑 Kunci jawaban (hanya terlihat di layar host): <b></b></div>
+      <div class="q-actions"><button class="cta" id="btn-close-q">Tutup soal & tampilkan jawaban</button></div>
+    </div>
+  </section>
+
+  <!-- ============ BALAPAN (HOST) ============ -->
+  <section id="s-host-race" class="screen">
+    <header class="bar"><button class="back" data-back>✕ Akhiri</button><h2>Balapan Ulat</h2><span class="right muted" id="race-progress"></span></header>
+    <div class="track" id="race-track"></div>
+    <div class="center"><button class="cta" id="btn-next">Soal berikutnya</button></div>
+  </section>
+
+  <!-- ============ JUARA (HOST) ============ -->
+  <section id="s-host-end" class="screen">
+    <header class="bar"><button class="back" data-back>⌂ Menu utama</button><h2>Juara Balapan</h2><span></span></header>
+    <div class="podium" id="podium"></div>
+    <div class="card"><table id="final-table"></table></div>
+    <div class="end-actions">
+      <button class="btn-sm yellow" id="btn-csv">⬇ Unduh nilai (CSV)</button>
+      <button class="btn-sm" id="btn-export-sheet">📊 Kirim ke spreadsheet</button>
+      <button class="btn-sm" id="btn-again">↻ Lomba lagi dengan soal yang sama</button>
+    </div>
+    <p class="muted" id="export-status" style="text-align:center"></p>
+  </section>
+
+  <!-- ============ GABUNG (PESERTA) ============ -->
+  <section id="s-join" class="screen">
+    <header class="bar"><button class="back" data-back>← Kembali</button><h2>Gabung Lomba</h2><span></span></header>
+    <div class="p-card join-form">
+      <div id="join-ulat"></div>
+      <input id="input-pin" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="PIN" aria-label="PIN lomba">
+      <input id="input-nama" maxlength="20" autocomplete="nickname" placeholder="Nama kamu" aria-label="Nama peserta">
+      <button class="cta" id="btn-join">Gabung</button>
+    </div>
+  </section>
+
+  <!-- ============ MENUNGGU (PESERTA) ============ -->
+  <section id="s-p-wait" class="screen">
+    <header class="p-head"><button class="back" data-back>✕ Keluar</button><span class="info" id="pw-name"></span></header>
+    <div class="p-card" id="pw-box" style="flex:1;align-content:center"></div>
+  </section>
+
+  <!-- ============ MENJAWAB (PESERTA) ============ -->
+  <section id="s-p-play" class="screen">
+    <header class="p-head"><button class="back" data-back>✕</button><span class="info" id="pp-num"></span><span class="info" id="pp-sec"></span></header>
+    <div class="ptimer"><div id="pp-bar" style="width:100%"></div></div>
+    <div class="pq-text" id="pp-text"></div>
+    <div class="pbtns" id="pp-opts"></div>
+  </section>
+
+  <!-- ============ HASIL SOAL (PESERTA) ============ -->
+  <section id="s-p-feedback" class="screen">
+    <header class="p-head"><button class="back" data-back>✕ Keluar</button><span class="info" id="pf-name"></span></header>
+    <div class="p-card" id="pf-box" style="flex:1;align-content:center"></div>
+  </section>
+
+  <!-- ============ SELESAI (PESERTA) ============ -->
+  <section id="s-p-end" class="screen">
+    <header class="p-head"><button class="back" data-back>⌂ Menu utama</button><span></span></header>
+    <div class="p-card" id="pe-box" style="flex:1;align-content:center"></div>
+  </section>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ======================= PEMBACA SOAL ======================= -->
+<script>
+/* Mengubah teks (dari PDF/Word/TXT) menjadi daftar soal {text, options[], answer} */
+function parseQuestions(raw){
+  var L='ABCDE';
+  var t=String(raw||'').replace(/\r/g,'').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ');
+  // pisahkan pilihan yang tertulis sebaris: "... A. x B. y C. z"
+  t=t.replace(/ +(?=\*?\(?[A-Ea-e][\.\)] )/g,'\n');
+  // pisahkan baris kunci yang menempel
+  t=t.replace(/ +(?=(kunci(\s*jawaban)?|jawaban(\s*benar)?)\s*[:=]\s*\(?[A-Ea-e]\b)/gi,'\n');
+  var lines=t.split('\n').map(function(s){return s.trim()}).filter(Boolean);
+  var reQ=/^(?:soal\s*)?(\d{1,3})\s*[\.\)]\s*(.*)$/i;
+  var reO=/^(\*)?\s*\(?([A-Ea-e])[\.\)]\s*(.*?)\s*(\*)?$/;
+  var reA=/^(?:kunci(?:\s*jawaban)?|jawaban(?:\s*benar)?|jwb|jawab)\s*[:=\-]?\s*\(?([A-Ea-e])\b/i;
+  var reKeyHead=/^kunci\s*jawaban\s*:?$/i;
+  var qs=[], cur=null, keyMode=false;
+  for(var k=0;k<lines.length;k++){
+    var line=lines[k], m;
+    if(reKeyHead.test(line)){ keyMode=true; continue; }
+    if(keyMode){
+      var re=/(\d{1,3})\s*[\.\)\-:=]?\s*([A-Ea-e])\b/g, mm, hit=false;
+      while((mm=re.exec(line))){ var q=qs[parseInt(mm[1],10)-1]; if(q){ q.answer=L.indexOf(mm[2].toUpperCase()); hit=true; } }
+      if(hit) continue;
+    }
+    if((m=line.match(reA)) && cur){ cur.answer=L.indexOf(m[1].toUpperCase()); continue; }
+    if((m=line.match(reO)) && cur){
+      var idx=L.indexOf(m[2].toUpperCase());
+      if(idx===cur.options.length){ cur.options.push(m[3].trim()); if(m[1]||m[4]) cur.answer=idx; continue; }
+    }
+    if((m=line.match(reQ)) && (!cur || cur.options.length>=2)){
+      cur={text:m[2].trim(),options:[],answer:-1}; qs.push(cur); continue;
+    }
+    if(cur){
+      if(cur.options.length) cur.options[cur.options.length-1]+=' '+line;
+      else cur.text+=(cur.text?' ':'')+line;
+    }
+  }
+  return qs.filter(function(q){return q.text && q.options.length>=2});
+}
+if(typeof module!=='undefined') module.exports={parseQuestions:parseQuestions};
+</script>
+
+<!-- ======================= APLIKASI ======================= -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, deleteDoc, onSnapshot, collection, writeBatch, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+
+// Konfigurasi Firebase Anda
+const firebaseConfig = {
+  apiKey: "AIzaSyAXbg44BtfEc6tPU3X3mzUU4xnfm-Z52xk",
+  authDomain: "lombacerdsa-cermat-pln.firebaseapp.com",
+  projectId: "lombacerdsa-cermat-pln",
+  storageBucket: "lombacerdsa-cermat-pln.firebasestorage.app",
+  messagingSenderId: "925030222685",
+  appId: "1:925030222685:web:ba49e175056505881d36b4",
+  measurementId: "G-CLEP11LDMQ"
+};
+// --- GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA ---
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbylDJ5Ka5eGU_5Ze9PUIlzPsF-6cl2t2UNxijhVXAJ7XoVNwQEeDYQE18zcqvJlhxvN/exec";
+
+const db = getFirestore(initializeApp(firebaseConfig));
+
+/* ---------- Utilitas ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LETTERS = 'ABCDE';
+const SHAPES = ['▲','◆','●','■','★'];
+const PALETTE = ['#7bd36b','#ff8a65','#4fc3f7','#ffd54f','#ba68c8','#f06292','#4db6ac','#9ccc65','#ffb74d','#7986cb','#e57373','#4dd0e1'];
+const ulat = (c, size='') => `<div class="ulat ${size}" style="--c:${c||'#7bd36b'}"><i></i><i></i><i></i><i></i><b class="head"><em></em><em></em><u></u></b></div>`;
+const posCss = (p, w=130) => `calc((100% - ${w}px) * ${Math.max(0, Math.min(1, p)).toFixed(4)})`;
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),3200); }
+
+const SAMPLE = `1. Apa kepanjangan dari PLN?
+A. Perusahaan Listrik Negara
+B. Pembangkit Listrik Nasional
+C. Perusahaan Listrik Nusantara
+D. Pusat Listrik Negara
+Jawaban: A
+
+2. Satuan daya listrik adalah...
+A. Volt
+B. Ampere
+C. Watt
+D. Ohm
+Jawaban: C
+
+3. Tegangan standar listrik rumah tangga di Indonesia adalah...
+A. 110 V
+B. 220 V
+C. 380 V
+D. 20 kV
+Jawaban: B
+
+4. Alat untuk mengukur pemakaian energi listrik pelanggan adalah...
+A. Voltmeter
+B. Amperemeter
+C. Ohmmeter
+D. kWh meter
+Jawaban: D
+
+5. PLTS adalah singkatan dari...
+A. Pembangkit Listrik Tenaga Surya
+B. Pembangkit Listrik Tenaga Sampah
+C. Pusat Listrik Tenaga Sinar
+D. Pembangkit Listrik Tenaga Sungai
+Jawaban: A`;
+$('#sample-text').textContent = SAMPLE;
+$('#join-ulat').innerHTML = ulat('#7bd36b','lg');
+
+/* ---------- State ---------- */
+const S = { questions:[], game:[], time:20, title:'', pin:'', unsubs:[] };
+const H = { players:{}, qi:-1, answers:{}, revealed:false, showKey:true, timer:null, deadline:0, ansUnsub:null, prev:{} };
+const P = { id:'', name:'', color:'', room:null, me:null, all:[], lastQ:-1, recv:0, answered:false, choice:-1, timer:null, leaving:false };
+const roomRef = () => doc(db, 'rooms', S.pin);
+
+/* ---------- Navigasi & tombol kembali ---------- */
+let current = 's-home', trap = false;
+function show(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  current = id;
+  if(id !== 's-home' && !trap){ history.pushState({balap:1}, ''); trap = true; }
+  window.scrollTo(0, 0);
+}
+// tombol "back" HP/browser ikut memakai logika kembali yang sama
+window.addEventListener('popstate', () => {
+  trap = false;
+  if(current !== 's-home'){
+    handleBack();
+    if(current !== 's-home'){ history.pushState({balap:1}, ''); trap = true; }
+  }
+});
+document.addEventListener('click', e => {
+  const go = e.target.closest('[data-go]'); if(go){ show(go.dataset.go); return; }
+  const bk = e.target.closest('[data-back]'); if(bk){ handleBack(); }
+});
+function handleBack(){
+  switch(current){
+    case 's-help': case 's-join': case 's-host-setup': show('s-home'); break;
+    case 's-host-lobby':
+      if(confirm('Tutup ruangan? Semua peserta akan dikeluarkan.')){ closeRoom(); show('s-host-setup'); } break;
+    case 's-host-q': case 's-host-race':
+      if(confirm('Akhiri lomba sekarang? Nilai sampai soal terakhir yang sudah dinilai akan menjadi hasil akhir.')) finishGame(); break;
+    case 's-host-end':
+      if(confirm('Kembali ke menu utama? Pastikan nilai sudah diunduh.')){ cleanup(); show('s-home'); } break;
+    case 's-p-wait': case 's-p-play': case 's-p-feedback':
+      if(confirm('Keluar dari lomba? Skormu akan hilang.')){ leaveRoom(); show('s-home'); } break;
+    case 's-p-end': cleanup(); show('s-home'); break;
+    default: show('s-home');
+  }
+}
+function cleanup(){
+  S.unsubs.forEach(u => { try{ u(); }catch{} }); S.unsubs = [];
+  if(H.ansUnsub){ H.ansUnsub(); H.ansUnsub = null; }
+  clearInterval(H.timer); clearInterval(P.timer);
+}
+
+/* ======================= HOST: SIAPKAN SOAL ======================= */
+const fileInput = $('#file-input'), drop = $('#drop');
+fileInput.addEventListener('change', e => { const f = e.target.files[0]; if(f) loadFile(f); e.target.value = ''; });
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if(f) loadFile(f); });
+$('#btn-parse-text').addEventListener('click', () => applyParsed($('#paste-text').value, 'teks tempelan'));
+$('#btn-sample').addEventListener('click', () => applyParsed(SAMPLE, 'soal contoh'));
+$('#btn-dl-template').addEventListener('click', () => download('contoh-format-soal.txt', SAMPLE, 'text/plain'));
+
+function setStatus(cls, msg){ const s = $('#file-status'); s.className = 'status ' + cls; s.textContent = msg; }
+
+async function loadFile(f){
+  setStatus('load', 'Membaca ' + f.name + '…');
+  try{
+    const ext = f.name.split('.').pop().toLowerCase();
+    const buf = await f.arrayBuffer();
+    let text = '';
+    if(ext === 'pdf') text = await readPdf(buf);
+    else if(ext === 'docx') text = await readDocx(buf);
+    else if(ext === 'txt') text = new TextDecoder().decode(buf);
+    else if(ext === 'doc') throw new Error('File .doc versi lama belum bisa dibaca. Buka di Word, lalu Save As ke .docx.');
+    else throw new Error('Format file tidak didukung. Gunakan PDF, .docx, atau .txt.');
+    if(!text.trim()) throw new Error('File tidak berisi teks. PDF hasil scan (gambar) tidak bisa dibaca — gunakan file Word aslinya.');
+    applyParsed(text, f.name);
+  }catch(err){ setStatus('err', '⚠ ' + err.message); }
+}
+
+async function readPdf(buf){
+  if(!window.pdfjsLib) throw new Error('Pembaca PDF gagal dimuat. Periksa koneksi internet.');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let out = '';
+  for(let p = 1; p <= pdf.numPages; p++){
+    const tc = await (await pdf.getPage(p)).getTextContent();
+    let lastY = null;
+    for(const it of tc.items){
+      const y = it.transform ? it.transform[5] : null;
+      if(lastY !== null && y !== null && Math.abs(y - lastY) > 3 && !out.endsWith('\n')) out += '\n';
+      out += it.str;
+      if(it.hasEOL) out += '\n';
+      if(y !== null) lastY = y;
+    }
+    out += '\n';
+  }
+  return out;
+}
+
+async function readDocx(buf){
+  if(!window.mammoth) throw new Error('Pembaca Word gagal dimuat. Periksa koneksi internet.');
+  const { value } = await mammoth.convertToHtml({ arrayBuffer: buf });
+  // Penomoran otomatis Word hilang di teks biasa, jadi daftar (ol/ul) diberi nomor/huruf ulang
+  const d = new DOMParser().parseFromString(value, 'text/html');
+  const lines = []; let qNum = 0, needOpts = false;
+  const own = li => [...li.childNodes].filter(n => !(n.nodeType === 1 && /^(OL|UL)$/.test(n.tagName))).map(n => n.textContent).join(' ').trim();
+  function walk(node, depth){
+    for(const el of node.children){
+      const tag = el.tagName;
+      if(tag === 'OL' || tag === 'UL'){
+        const asOpt = depth > 0 || needOpts; let i = 0;
+        for(const li of el.children){
+          if(li.tagName !== 'LI') continue;
+          const txt = own(li);
+          if(asOpt){ lines.push(LETTERS[i] + '. ' + txt); i++; }
+          else { qNum++; lines.push(qNum + '. ' + txt); needOpts = true; }
+          const subs = [...li.children].filter(c => c.tagName === 'OL' || c.tagName === 'UL');
+          subs.forEach(s => walk({ children: [s] }, depth + 1));
+          if(subs.length) needOpts = false;
         }
+        if(asOpt) needOpts = false;
+      } else if(tag === 'TABLE'){
+        el.querySelectorAll('tr').forEach(tr => lines.push([...tr.children].map(c => c.textContent.trim()).join(' ')));
+      } else {
+        const txt = el.textContent.trim(); if(!txt) continue;
+        const nm = txt.match(/^(\d{1,3})\s*[\.\)]/);
+        if(nm){ qNum = parseInt(nm[1], 10); needOpts = true; }
+        else if(/^\*?\(?[A-Ea-e][\.\)]\s/.test(txt)) needOpts = false;
+        lines.push(txt);
+      }
+    }
+  }
+  walk(d.body, 0);
+  return lines.join('\n');
+}
 
-        // --- LOGIC HOST ---
-        document.getElementById('btn-create-room').addEventListener('click', async () => {
-            currentPin = Math.floor(1000 + Math.random() * 9000).toString();
-            document.getElementById('display-pin').innerText = currentPin;
-            document.getElementById('host-lobby-info').classList.remove('hidden');
-            
-            // Buat ruangan di Firestore
-            await setDoc(doc(db, "rooms", currentPin), {
-                status: "waiting",
-                createdAt: new Date()
-            });
+function applyParsed(text, src){
+  const qs = parseQuestions(text);
+  if(!qs.length){ setStatus('err', '⚠ Tidak ada soal yang terbaca dari ' + src + '. Cek format di halaman Cara Main.'); S.questions = []; renderPreview(); return; }
+  S.questions = qs; renderPreview();
+  const noKey = qs.filter(q => q.answer < 0).length;
+  setStatus('ok', `✓ ${qs.length} soal terbaca dari ${src}` + (noKey ? `. ${noKey} soal belum punya kunci, klik pilihan yang benar.` : '.'));
+}
 
-            // Dengarkan peserta yang masuk
-            onSnapshot(collection(db, "rooms", currentPin, "players"), (snapshot) => {
-                const list = document.getElementById('list-players');
-                list.innerHTML = "";
-                document.getElementById('player-count').innerText = snapshot.size;
-                snapshot.forEach((doc) => {
-                    const li = document.createElement('li');
-                    li.className = "bg-blue-100 px-3 py-1 rounded-full";
-                    li.innerText = doc.data().nama;
-                    list.appendChild(li);
-                });
-            });
-        });
+function renderPreview(){
+  $('#preview-card').hidden = !S.questions.length;
+  $('#q-count').textContent = `(${S.questions.length} soal)`;
+  $('#q-list').innerHTML = S.questions.map((q, qi) => `
+    <li class="pq ${q.answer < 0 ? 'nokey' : ''}">
+      <div class="pq-head"><span class="pq-no">${qi + 1}</span><p>${esc(q.text)}</p>
+        <button class="icon-btn" data-del="${qi}" title="Hapus soal ini" aria-label="Hapus soal ${qi + 1}">🗑</button></div>
+      <div class="pq-opts">${q.options.map((o, oi) => `<button class="pq-opt ${oi === q.answer ? 'key' : ''}" data-q="${qi}" data-o="${oi}"><b>${LETTERS[oi]}.</b> ${esc(o)}</button>`).join('')}</div>
+      ${q.answer < 0 ? '<small class="warn">Belum ada kunci jawaban</small>' : ''}
+    </li>`).join('');
+  $('#btn-create-room').disabled = !S.questions.some(q => q.answer >= 0);
+}
+$('#q-list').addEventListener('click', e => {
+  const o = e.target.closest('[data-o]');
+  if(o){ S.questions[+o.dataset.q].answer = +o.dataset.o; renderPreview(); return; }
+  const d = e.target.closest('[data-del]');
+  if(d && confirm('Hapus soal nomor ' + (+d.dataset.del + 1) + '?')){ S.questions.splice(+d.dataset.del, 1); renderPreview(); }
+});
 
-        document.getElementById('btn-start-game').addEventListener('click', async () => {
-            await setDoc(doc(db, "rooms", currentPin), { status: "playing" }, { merge: true });
-            alert("Kuis dimulai! Peserta sekarang bisa menekan tombol.");
-        });
+/* ======================= HOST: RUANGAN ======================= */
+$('#btn-create-room').addEventListener('click', createRoom);
+async function createRoom(){
+  const valid = S.questions.filter(q => q.answer >= 0 && q.options.length >= 2);
+  const skip = S.questions.length - valid.length;
+  if(skip && !confirm(`${skip} soal belum punya kunci dan akan dilewati. Lanjutkan?`)) return;
+  const btn = $('#btn-create-room'); btn.disabled = true; btn.textContent = 'Membuat ruangan…';
+  try{
+    S.game = valid.map(q => ({ text: q.text, options: [...q.options], answer: q.answer }));
+    S.time = +$('#set-time').value; S.title = $('#set-title').value.trim() || 'Balapan Ulat';
+    let pin = '';
+    for(let k = 0; k < 15; k++){
+      pin = String(Math.floor(1000 + Math.random() * 9000));
+      if(!(await getDoc(doc(db, 'rooms', pin))).exists()) break;
+    }
+    S.pin = pin;
+    // Hanya info umum yang disimpan di server. Kunci jawaban tetap di perangkat host.
+    await setDoc(roomRef(), { status: 'lobby', title: S.title, total: S.game.length, duration: S.time, qIndex: -1, createdAt: serverTimestamp() });
+    H.players = {}; H.prev = {}; H.qi = -1;
+    S.unsubs.push(onSnapshot(collection(db, 'rooms', pin, 'players'), snap => {
+      const p = {}; snap.forEach(d => p[d.id] = { id: d.id, ...d.data() });
+      H.players = p; renderLobby(); if(current === 's-host-q') updateAnswered();
+    }));
+    $('#display-pin').textContent = pin;
+    $('#lobby-title').textContent = S.title;
+    $('#join-url').textContent = location.protocol.startsWith('http') ? location.origin + location.pathname : '';
+    renderLobby(); show('s-host-lobby');
+  }catch(err){ console.error(err); toast('Gagal membuat ruangan: ' + err.message); }
+  finally{ btn.disabled = false; btn.textContent = 'Buat ruangan'; }
+}
 
-        // --- LOGIC PESERTA ---
-        document.getElementById('btn-join').addEventListener('click', async () => {
-            const pin = document.getElementById('input-pin').value.trim();
-            const nama = document.getElementById('input-nama').value.trim();
-            
-            if(pin.length === 4 && nama !== "") {
-                currentPin = pin;
-                playerName = nama;
-                
-                // Daftarkan ke Firestore
-                await setDoc(doc(db, "rooms", currentPin, "players", playerName), {
-                    nama: playerName,
-                    score: 0
-                });
+function renderLobby(){
+  const list = Object.values(H.players).sort((a, b) => (a.joinedAt?.seconds || 0) - (b.joinedAt?.seconds || 0));
+  $('#player-count').textContent = list.length;
+  $('#lobby-players').innerHTML = list.map(p => `<button class="chip" data-kick="${p.id}" title="Keluarkan ${esc(p.nama)}">${ulat(p.color, 'sm')}${esc(p.nama)}</button>`).join('');
+  $('#lobby-empty').textContent = list.length ? 'Ketuk nama peserta untuk mengeluarkannya.' : 'Belum ada peserta. Bagikan PIN di atas.';
+  $('#btn-start-game').disabled = !list.length;
+}
+$('#lobby-players').addEventListener('click', async e => {
+  const c = e.target.closest('[data-kick]'); if(!c) return;
+  const p = H.players[c.dataset.kick];
+  if(p && confirm(`Keluarkan ${p.nama} dari ruangan?`)) await deleteDoc(doc(db, 'rooms', S.pin, 'players', p.id));
+});
 
-                showScreen('screen-game-player');
+async function closeRoom(){
+  try{ if(S.pin) await setDoc(roomRef(), { status: 'closed' }, { merge: true }); }catch{}
+  cleanup();
+}
 
-                // Dengarkan status game (jika host menghentikan kuis)
-                onSnapshot(doc(db, "rooms", currentPin), (doc) => {
-                    if (doc.data()?.status === "finished") {
-                        showScreen('screen-result');
-                        document.getElementById('final-score').innerText = `Skor Akhir Anda: ${playerScore}`;
-                    }
-                });
-            } else {
-                alert("Masukkan PIN 4 digit dan Nama Anda!");
-            }
-        });
+/* ======================= HOST: JALANNYA LOMBA ======================= */
+$('#btn-start-game').addEventListener('click', () => startQuestion(0));
 
-        window.submitAnswer = function(pilihan) {
-            // Simulasi skoring (karena AI/soal kompleks diringkas)
-            playerScore += 100; 
-            
-            // Update skor ke Firestore
-            setDoc(doc(db, "rooms", currentPin, "players", playerName), {
-                score: playerScore
-            }, { merge: true });
-            
-            alert("Jawaban terekam!");
-        }
+async function startQuestion(i){
+  H.qi = i; H.revealed = false; H.answers = {};
+  const q = S.game[i];
+  try{
+    await setDoc(roomRef(), { status: 'question', qIndex: i, q: { text: q.text, options: q.options }, duration: S.time, dist: null }, { merge: true });
+  }catch(err){ toast('Gagal mengirim soal: ' + err.message); return; }
+  if(H.ansUnsub) H.ansUnsub();
+  H.ansUnsub = onSnapshot(collection(db, 'rooms', S.pin, 'rounds', String(i), 'answers'), snap => {
+    H.answers = {}; snap.forEach(d => H.answers[d.id] = d.data());
+    updateAnswered();
+    const n = Object.keys(H.players).length;
+    if(n && Object.keys(H.answers).filter(id => H.players[id]).length >= n) reveal();
+  });
+  renderHostQ(); startHostTimer(); show('s-host-q');
+}
 
-        // --- EKSPOR SPREADSHEET ---
-        document.getElementById('btn-export-sheet').addEventListener('click', () => {
-            const statusText = document.getElementById('export-status');
-            
-            if (GOOGLE_SHEETS_URL === "URL_WEB_APP_GOOGLE_APPS_SCRIPT_ANDA_DISINI") {
-                alert("Harap masukkan URL Google Apps Script Anda di dalam kode terlebih dahulu.");
-                return;
-            }
+function renderHostQ(){
+  const q = S.game[H.qi], sec = $('#s-host-q');
+  $('#hq-num').textContent = `${H.qi + 1} dari ${S.game.length}`;
+  $('#hq-text').textContent = q.text;
+  $('#hq-opts').innerHTML = q.options.map((o, i) => `
+    <div class="opt o${i} ${i === q.answer ? 'is-key' : ''}">
+      <span class="shape">${SHAPES[i]}</span><span class="otext">${esc(o)}</span>
+      <span class="keybadge">✓ Kunci</span><span class="cnt" data-cnt="${i}"></span>
+    </div>`).join('');
+  $('#hq-key b').textContent = `${LETTERS[q.answer]}. ${q.options[q.answer]}`;
+  sec.classList.remove('revealed'); sec.classList.toggle('show-key', H.showKey);
+  $('#btn-close-q').textContent = 'Tutup soal & tampilkan jawaban';
+  updateAnswered();
+}
+function updateAnswered(){
+  const n = Object.keys(H.players).length;
+  const a = Object.keys(H.answers).filter(id => H.players[id]).length;
+  $('#hq-answered').textContent = `${a}/${n}`;
+}
+$('#btn-toggle-key').addEventListener('click', () => {
+  H.showKey = !H.showKey;
+  $('#s-host-q').classList.toggle('show-key', H.showKey);
+  $('#btn-toggle-key').textContent = H.showKey ? '🙈 Sembunyikan kunci' : '🔑 Tampilkan kunci';
+});
 
-            // Data yang dikirim
-            const payload = {
-                nama: playerName || "Host/Uji Coba",
-                nilai: playerScore,
-                peringkat: "-"
-            };
+function startHostTimer(){
+  clearInterval(H.timer);
+  const dur = S.time * 1000, C = 2 * Math.PI * 44, ring = $('#hq-ring');
+  ring.style.strokeDasharray = C;
+  const end = Date.now() + dur;
+  const tick = () => {
+    const rem = Math.max(0, end - Date.now());
+    $('#hq-sec').textContent = Math.ceil(rem / 1000);
+    ring.style.strokeDashoffset = C * (1 - rem / dur);
+    $('#hq-timer').classList.toggle('hurry', rem <= 5000);
+    // tambahan 1 detik untuk jawaban yang masih di jalan
+    if(Date.now() >= end + 1000) reveal();
+  };
+  tick(); H.timer = setInterval(tick, 200);
+}
 
-            fetch(GOOGLE_SHEETS_URL, {
-                method: "POST",
-                mode: 'no-cors',
-                headers: {
-                    "Content-Type": "text/plain",
-                },
-                body: JSON.stringify(payload)
-            }).then(() => {
-                statusText.classList.remove('hidden');
-                document.getElementById('btn-export-sheet').disabled = true;
-                document.getElementById('btn-export-sheet').classList.add('opacity-50');
-            }).catch((error) => {
-                console.error("Error:", error);
-                alert("Gagal mengirim data.");
-            });
-        });
+$('#btn-close-q').addEventListener('click', () => { if(!H.revealed) reveal(); else showRace(); });
 
-    </script>
+async function reveal(){
+  if(H.revealed) return; H.revealed = true;
+  clearInterval(H.timer);
+  if(H.ansUnsub){ H.ansUnsub(); H.ansUnsub = null; }
+  const q = S.game[H.qi], dur = S.time * 1000, dist = q.options.map(() => 0);
+  const batch = writeBatch(db);
+  for(const p of Object.values(H.players)){
+    const a = H.answers[p.id]; let pts = 0, ok = false;
+    if(a && a.choice >= 0 && a.choice < dist.length){
+      dist[a.choice]++;
+      if(a.choice === q.answer){
+        ok = true;
+        const t = Math.min(Math.max(+a.ms || dur, 0), dur);
+        pts = Math.round(1000 * (1 - (t / dur) / 2));   // 500–1000 poin, makin cepat makin besar
+      }
+    }
+    const streak = ok ? (p.streak || 0) + 1 : 0;
+    if(ok && streak >= 3) pts += 100;
+    const upd = { score: (p.score || 0) + pts, lastPoints: pts, lastCorrect: ok, answered: !!a, streak, benar: (p.benar || 0) + (ok ? 1 : 0), round: H.qi };
+    batch.set(doc(db, 'rooms', S.pin, 'players', p.id), upd, { merge: true });
+    H.players[p.id] = { ...p, ...upd };
+  }
+  try{
+    await batch.commit();
+    await setDoc(roomRef(), { status: 'reveal', dist }, { merge: true });
+  }catch(err){ toast('Gagal menyimpan skor: ' + err.message); }
+  const sec = $('#s-host-q'); sec.classList.add('revealed');
+  dist.forEach((n, i) => { const c = sec.querySelector(`[data-cnt="${i}"]`); if(c) c.textContent = `${n} orang`; });
+  $('#hq-sec').textContent = '0';
+  $('#btn-close-q').textContent = 'Lihat balapan ulat 🐛';
+}
+
+function showRace(){
+  const list = Object.values(H.players).sort((a, b) => (b.score || 0) - (a.score || 0));
+  const lead = list[0]?.score || 0, frac = (H.qi + 1) / S.game.length;
+  const shown = list.slice(0, 12), track = $('#race-track');
+  track.innerHTML = shown.length ? shown.map((p, r) => `
+    <div class="lane">
+      <div class="rank r${r + 1}">${r + 1}</div>
+      <div class="road"><span class="finish"></span><span class="leaf">🍃</span>
+        <div class="runner" data-id="${p.id}" style="left:${posCss(H.prev[p.id] || 0)}">
+          <span class="tag">${esc(p.nama)}${p.lastCorrect ? ` <em>+${p.lastPoints}</em>` : ''}${(p.streak || 0) >= 2 ? ' 🔥' : ''}</span>${ulat(p.color)}
+        </div>
+      </div>
+      <div class="sc">${p.score || 0}</div>
+    </div>`).join('') + (list.length > 12 ? `<p class="more">+${list.length - 12} peserta lainnya</p>` : '')
+    : '<p class="more">Belum ada peserta.</p>';
+  // ulat merangkak dari posisi sebelumnya ke posisi baru
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    shown.forEach(p => {
+      const prog = lead > 0 ? frac * (p.score || 0) / lead : 0;
+      const el = track.querySelector(`.runner[data-id="${p.id}"]`);
+      if(el) el.style.left = posCss(prog);
+      H.prev[p.id] = prog;
+    });
+  }));
+  $('#race-progress').textContent = `Soal ${H.qi + 1}/${S.game.length}`;
+  $('#btn-next').textContent = H.qi + 1 >= S.game.length ? 'Lihat juara 🏆' : 'Soal berikutnya';
+  show('s-host-race');
+}
+$('#btn-next').addEventListener('click', () => {
+  if(H.qi + 1 >= S.game.length) finishGame(); else startQuestion(H.qi + 1);
+});
+
+async function finishGame(){
+  clearInterval(H.timer);
+  if(H.ansUnsub){ H.ansUnsub(); H.ansUnsub = null; }
+  try{ await setDoc(roomRef(), { status: 'finished' }, { merge: true }); }catch{}
+  renderPodium(); show('s-host-end');
+}
+const ranking = () => Object.values(H.players).sort((a, b) => (b.score || 0) - (a.score || 0));
+function renderPodium(){
+  const list = ranking();
+  const step = (p, n) => p ? `<div class="step p${n}">${n === 1 ? '<span class="crown">👑</span>' : ''}${ulat(p.color, n === 1 ? 'xl' : 'lg')}
+      <span class="nm">${esc(p.nama)}</span><span class="pts">${p.score || 0} poin</span><div class="blk">${n}</div></div>` : '<div></div>';
+  $('#podium').innerHTML = step(list[1], 2) + step(list[0], 1) + step(list[2], 3);
+  $('#final-table').innerHTML = `<tr><th>#</th><th>Nama</th><th class="num">Benar</th><th class="num">Skor</th></tr>` +
+    (list.length ? list.map((p, i) => `<tr><td>${i + 1}</td><td>${esc(p.nama)}</td><td class="num">${p.benar || 0}/${S.game.length}</td><td class="num">${p.score || 0}</td></tr>`).join('')
+      : '<tr><td colspan="4" class="muted">Tidak ada peserta.</td></tr>');
+  $('#export-status').textContent = '';
+  $('#btn-export-sheet').disabled = false;
+}
+
+function download(name, content, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$('#btn-csv').addEventListener('click', () => {
+  const rows = [['Peringkat','Nama','Benar','Jumlah Soal','Skor']].concat(ranking().map((p, i) => [i + 1, p.nama, p.benar || 0, S.game.length, p.score || 0]));
+  const csv = '\ufeff' + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
+  download(`nilai-${S.title.replace(/\W+/g, '-')}-${S.pin}.csv`, csv, 'text/csv');
+});
+$('#btn-export-sheet').addEventListener('click', async () => {
+  if(GOOGLE_SHEETS_URL.startsWith('URL_')){ toast('Isi dulu GOOGLE_SHEETS_URL di dalam kode.'); return; }
+  const payload = { judul: S.title, pin: S.pin, tanggal: new Date().toLocaleString('id-ID'),
+    peserta: ranking().map((p, i) => ({ peringkat: i + 1, nama: p.nama, benar: p.benar || 0, skor: p.score || 0 })) };
+  try{
+    await fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
+    $('#export-status').textContent = `Nilai ${payload.peserta.length} peserta terkirim ke spreadsheet.`;
+    $('#btn-export-sheet').disabled = true;
+  }catch(err){ toast('Gagal mengirim ke spreadsheet: ' + err.message); }
+});
+$('#btn-again').addEventListener('click', () => { cleanup(); S.pin = ''; show('s-host-setup'); });
+
+/* ======================= PESERTA ======================= */
+try{ const n = localStorage.getItem('balapUlatNama'); if(n) $('#input-nama').value = n; }catch{}
+$('#input-pin').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4); });
+$('#btn-join').addEventListener('click', joinRoom);
+$('#input-nama').addEventListener('keydown', e => { if(e.key === 'Enter') joinRoom(); });
+
+async function joinRoom(){
+  const pin = $('#input-pin').value.trim(), name = $('#input-nama').value.trim().slice(0, 20);
+  if(!/^\d{4}$/.test(pin) || !name){ toast('Masukkan PIN 4 angka dan nama kamu.'); return; }
+  const btn = $('#btn-join'); btn.disabled = true; btn.textContent = 'Menghubungkan…';
+  try{
+    const snap = await getDoc(doc(db, 'rooms', pin));
+    if(!snap.exists() || ['closed','finished'].includes(snap.data().status)) throw new Error('PIN tidak ditemukan atau lomba sudah selesai.');
+    try{ localStorage.setItem('balapUlatNama', name); }catch{}
+    S.pin = pin; P.name = name; P.leaving = false; P.lastQ = -1; P.me = null; P.all = [];
+    P.id = 'p' + Math.random().toString(36).slice(2, 10);
+    P.color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+    await setDoc(doc(db, 'rooms', pin, 'players', P.id), { nama: name, color: P.color, score: 0, benar: 0, streak: 0, joinedAt: serverTimestamp() });
+    S.unsubs.push(onSnapshot(doc(db, 'rooms', pin), s => onRoom(s.exists() ? s.data() : null)));
+    S.unsubs.push(onSnapshot(doc(db, 'rooms', pin, 'players', P.id), s => {
+      if(!s.exists()){
+        if(!P.leaving && P.room && P.room.status !== 'finished'){ cleanup(); toast('Kamu dikeluarkan dari ruangan oleh host.'); show('s-home'); }
+        return;
+      }
+      P.me = s.data(); if(current === 's-p-feedback') renderFeedback();
+    }));
+    S.unsubs.push(onSnapshot(collection(db, 'rooms', pin, 'players'), s => {
+      P.all = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0));
+      if(current === 's-p-feedback') renderFeedback();
+      if(current === 's-p-wait' && P.room?.status === 'lobby') renderWait('lobby');
+    }));
+    renderWait('lobby'); show('s-p-wait');
+  }catch(err){ toast(err.message); }
+  finally{ btn.disabled = false; btn.textContent = 'Gabung'; }
+}
+
+async function leaveRoom(){
+  P.leaving = true;
+  const finished = P.room?.status === 'finished';
+  cleanup();
+  if(!finished && S.pin && P.id){ try{ await deleteDoc(doc(db, 'rooms', S.pin, 'players', P.id)); }catch{} }
+}
+
+function onRoom(d){
+  P.room = d;
+  if(!d || d.status === 'closed'){
+    if(!P.leaving){ cleanup(); toast('Ruangan sudah ditutup host.'); show('s-home'); }
+    return;
+  }
+  if(d.status === 'lobby'){ renderWait('lobby'); show('s-p-wait'); }
+  else if(d.status === 'question'){
+    if(d.qIndex !== P.lastQ){
+      P.lastQ = d.qIndex; P.answered = false; P.choice = -1; P.recv = performance.now();
+      renderPlay(); show('s-p-play');
+    }
+  }
+  else if(d.status === 'reveal'){ clearInterval(P.timer); renderFeedback(); show('s-p-feedback'); }
+  else if(d.status === 'finished'){ clearInterval(P.timer); renderEnd(); show('s-p-end'); }
+}
+
+function renderWait(mode){
+  $('#pw-name').textContent = P.name;
+  const box = $('#pw-box');
+  if(mode === 'lobby'){
+    box.innerHTML = `${ulat(P.color, 'xl')}<p class="fb-title">Kamu sudah masuk!</p>
+      <p class="muted">Cari namamu di layar host. Lomba dimulai sebentar lagi.</p>
+      <span class="stat">${P.all.length || 1} peserta di ruangan</span>`;
+  } else if(mode === 'sent'){
+    const i = P.choice;
+    box.innerHTML = `<div class="pbtn o${i}" style="width:120px;height:120px;box-shadow:none"><span class="shape">${SHAPES[i]}</span></div>
+      <p class="fb-title">Jawaban terkirim ⚡</p><p class="muted">Tunggu peserta lain dan lihat layar host.</p>`;
+  } else {
+    box.innerHTML = `<div class="big-icon">⏱</div><p class="fb-title">Waktu habis</p><p class="muted">Siap-siap untuk soal berikutnya.</p>`;
+  }
+}
+
+function renderPlay(){
+  const d = P.room, q = d.q;
+  $('#pp-num').textContent = `Soal ${d.qIndex + 1}/${d.total}`;
+  $('#pp-text').textContent = q.text;
+  const box = $('#pp-opts');
+  box.className = 'pbtns n' + q.options.length;
+  box.innerHTML = q.options.map((o, i) => `<button class="pbtn o${i}" data-a="${i}"><span class="shape">${SHAPES[i]}</span><span>${esc(o)}</span></button>`).join('');
+  clearInterval(P.timer);
+  const dur = (d.duration || 20) * 1000;
+  const tick = () => {
+    const rem = Math.max(0, dur - (performance.now() - P.recv));
+    $('#pp-sec').textContent = Math.ceil(rem / 1000) + ' dtk';
+    $('#pp-bar').style.width = (rem / dur * 100) + '%';
+    if(rem <= 0){
+      clearInterval(P.timer);
+      if(!P.answered && current === 's-p-play'){ P.answered = true; renderWait('timeout'); show('s-p-wait'); }
+    }
+  };
+  tick(); P.timer = setInterval(tick, 150);
+}
+$('#pp-opts').addEventListener('click', async e => {
+  const b = e.target.closest('[data-a]'); if(!b || P.answered) return;
+  P.answered = true; P.choice = +b.dataset.a;
+  const ms = Math.round(performance.now() - P.recv), qi = P.lastQ;
+  clearInterval(P.timer);
+  renderWait('sent'); show('s-p-wait');
+  try{
+    await setDoc(doc(db, 'rooms', S.pin, 'rounds', String(qi), 'answers', P.id), { choice: P.choice, ms, nama: P.name });
+  }catch(err){ toast('Jawaban gagal terkirim: ' + err.message); }
+});
+
+function myRank(){ const i = P.all.findIndex(p => p.id === P.id); return i < 0 ? '-' : i + 1; }
+function renderFeedback(){
+  const d = P.room, me = P.me; if(!d) return;
+  $('#pf-name').textContent = P.name;
+  const box = $('#pf-box');
+  if(!me || me.round !== d.qIndex){
+    box.className = 'p-card'; box.innerHTML = `<div class="big-icon">⏳</div><p class="fb-title">Menghitung skor…</p>`; return;
+  }
+  const lead = P.all[0]?.score || 0, prog = lead ? (me.score || 0) / lead : 0;
+  let icon, title, sub = '';
+  if(me.lastCorrect){ icon = '✅'; title = 'Benar!'; sub = `+${me.lastPoints} poin${(me.streak || 0) >= 2 ? ` · 🔥 ${me.streak}× beruntun` : ''}`; }
+  else if(!me.answered){ icon = '⏱'; title = 'Tidak menjawab'; }
+  else { icon = '❌'; title = 'Belum tepat'; sub = 'Lihat jawaban yang benar di layar host.'; }
+  box.className = 'p-card ' + (me.lastCorrect ? 'fb-ok' : 'fb-bad');
+  box.innerHTML = `<div class="big-icon">${icon}</div><p class="fb-title">${title}</p>${sub ? `<p>${sub}</p>` : ''}
+    <div class="mini-track"><span class="leaf">🍃</span><div class="runner" style="left:${posCss(prog * .92, 90)}">${ulat(P.color, 'sm')}</div></div>
+    <div class="stat-row"><span class="stat">Peringkat ${myRank()} dari ${P.all.length}</span><span class="stat">${me.score || 0} poin</span></div>`;
+}
+
+function renderEnd(){
+  const me = P.me || {}, r = myRank();
+  const medal = r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : '🏁';
+  $('#pe-box').innerHTML = `<div class="big-icon">${medal}</div>${ulat(P.color, 'xl')}
+    <p class="fb-title">Lomba selesai!</p>
+    <div class="stat-row"><span class="stat">Peringkat ${r} dari ${P.all.length}</span>
+      <span class="stat">${me.score || 0} poin</span><span class="stat">${me.benar || 0}/${P.room?.total || 0} benar</span></div>
+    <p class="muted">Terima kasih sudah ikut balapan, ${esc(P.name)}.</p>`;
+}
+</script>
 </body>
 </html>
