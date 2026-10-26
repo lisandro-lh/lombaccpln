@@ -309,6 +309,28 @@ td.num,th.num{text-align:right}
 .racing .moving .ulat i,.racing .moving .ulat .head{animation-duration:.3s}
 .rank.bump{animation:pop .3s ease}
 .race-actions{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap}
+.cta.sm{font-size:17px;padding:8px 16px;box-shadow:3px 3px 0 var(--ink)}
+.dash{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.dash{grid-template-columns:1fr}}
+.dq-list{list-style:none;padding:0;display:grid;gap:10px;max-height:62vh;overflow:auto;padding-right:4px}
+.dq{border:2px solid var(--ink);border-radius:14px;padding:10px 12px}
+.dq p{font-weight:800;margin-bottom:4px}
+.dq .key{color:var(--ok);font-weight:800}
+.dq small{color:var(--ink-soft)}
+.bar2{height:8px;background:#e7edf3;border-radius:99px;overflow:hidden;margin-top:6px}
+.bar2 i{display:block;height:100%;background:var(--ok);transition:width .4s}
+.prog{height:10px;background:#e7edf3;border-radius:99px;overflow:hidden;min-width:80px}
+.prog i{display:block;height:100%;background:var(--pln);transition:width .4s}
+span.nm{display:inline-flex;align-items:center;gap:8px}
+.track.live{--lane-h:84px;gap:8px}
+.track.live .road{height:var(--lane-h)}
+.track.live .ulat{--s:calc(var(--lane-h) * .24)}
+.track.live .runner{transition:left 1.4s cubic-bezier(.25,.9,.3,1);bottom:5px}
+.track.live .runner .tag{font-size:clamp(11px, calc(var(--lane-h) * .18), 15px)}
+.track.live .rank{width:calc(var(--lane-h) * .5);height:calc(var(--lane-h) * .5);min-width:28px;min-height:28px}
+.tag .pg{color:var(--ink-soft);font-weight:700}
+.pbtns.lock .pbtn{opacity:.35;transition:opacity .2s}
+.pbtns.lock .pbtn.picked{opacity:1;transform:scale(1.04)}
 /* kontrol otomatis & jeda */
 .auto-status,.sheet-status{font-weight:800;background:#fff;border:2px solid var(--ink);border-radius:999px;padding:8px 16px}
 .auto-status:empty,.sheet-status:empty{display:none}
@@ -363,9 +385,10 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
           <li>Pilih <b>Host</b>, lalu upload file soal (PDF, Word .docx, atau .txt).</li>
           <li>Cek pratinjau. Kunci jawaban ditandai hijau. Klik pilihan lain untuk mengganti kunci.</li>
           <li>Tekan <b>Buat ruangan</b>. Tampilkan PIN di proyektor.</li>
-          <li>Setelah peserta masuk, tekan <b>Mulai lomba</b>.</li>
-          <li>Tiap soal selesai, tampilkan jawaban lalu lihat balapan ulat.</li>
-          <li>Di akhir, unduh nilai (CSV) atau kirim ke spreadsheet.</li>
+          <li>Setelah peserta masuk, tekan <b>Mulai lomba</b>. Peserta menjawab di HP masing-masing.</li>
+          <li><b>Mode Jawaban</b> menampilkan kunci, statistik tiap soal, dan progres peserta.</li>
+          <li>Tekan <b>Mode Layar</b> untuk langsung menampilkan balapan ulat di proyektor.</li>
+          <li>Tiap akhir sesi, peringkat muncul dan terekap otomatis ke spreadsheet.</li>
         </ol>
       </div>
       <div class="card">
@@ -373,7 +396,7 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
         <ol>
           <li>Buka alamat yang sama di HP, pilih <b>Peserta</b>.</li>
           <li>Masukkan PIN 4 angka dan nama.</li>
-          <li>Soal dan pilihan muncul di HP. Pilih jawaban secepatnya.</li>
+          <li>Soal muncul di HP. Setelah memilih jawaban, soal berikutnya langsung muncul.</li>
           <li>Makin cepat menjawab benar, makin besar poin (maks. 1000). Benar 3× beruntun dapat bonus 100.</li>
         </ol>
         <p class="muted" style="margin-top:12px">Kunci jawaban tidak pernah dikirim ke HP peserta. Peserta hanya melihat soal dan pilihan.</p>
@@ -450,39 +473,40 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
     <div class="center"><button class="cta" id="btn-start-game" disabled>Mulai lomba 🏁</button></div>
   </section>
 
-  <!-- ============ SOAL (HOST) ============ -->
-  <section id="s-host-q" class="screen show-key">
+  <!-- ============ MODE JAWABAN (HOST) ============ -->
+  <section id="s-host-dash" class="screen">
     <header class="bar">
       <button class="back" data-back>← Kembali</button>
-      <h2>Soal <span id="hq-num"></span></h2>
-      <button class="ghost right" id="btn-toggle-key">🙈 Sembunyikan kunci</button>
+      <h2 id="dash-title">Mode Jawaban</h2>
+      <button class="cta sm right" data-view="screen">🖥 Mode Layar</button>
     </header>
-    <div class="q-wrap">
-      <div class="q-top">
-        <div class="q-text" id="hq-text"></div>
-        <div>
-          <div class="timer" id="hq-timer">
-            <svg viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="44"/><circle class="bar" id="hq-ring" cx="50" cy="50" r="44"/></svg>
-            <span id="hq-sec">20</span>
-          </div>
-          <div class="answered"><span id="hq-answered">0/0</span><br><small class="muted">sudah menjawab</small></div>
-        </div>
+    <div class="dash">
+      <div class="card">
+        <div class="preview-head"><h3>Soal & kunci</h3><span class="keymode">🔑 Mode jawaban · hanya host</span></div>
+        <ol class="dq-list" id="dash-qs"></ol>
       </div>
-      <div class="opts" id="hq-opts"></div>
-      <div class="keybox" id="hq-key">🔑 Kunci jawaban (hanya terlihat di layar host): <b></b></div>
-      <div class="q-actions"><span class="auto-status"></span><button class="cta btn-pause">⏸ Jeda</button></div>
+      <div class="card">
+        <div class="preview-head"><h3>Progres peserta</h3><span class="muted" id="dash-done"></span></div>
+        <div class="table-wrap"><table id="dash-players"></table></div>
+      </div>
+    </div>
+    <div class="race-actions">
+      <button class="btn-sm" id="btn-end-sess">⏹ Akhiri sesi sekarang</button>
+      <button class="cta btn-pause">⏸ Jeda</button>
     </div>
   </section>
 
-  <!-- ============ BALAPAN (HOST) ============ -->
-  <section id="s-host-race" class="screen">
-    <header class="bar"><button class="back" data-back>← Kembali</button><h2>Balapan Ulat</h2><span class="right muted" id="race-progress"></span></header>
-    <div class="track-wrap">
-      <div class="track" id="race-track"></div>
-      <div class="race-count" id="race-count" hidden></div>
-    </div>
+  <!-- ============ MODE LAYAR: BALAPAN LANGSUNG (HOST) ============ -->
+  <section id="s-host-screen" class="screen">
+    <header class="bar">
+      <button class="back" data-back>← Kembali</button>
+      <h2 id="scr-title">Balapan Ulat</h2>
+      <span class="right sheet-status" id="scr-done"></span>
+    </header>
+    <div class="track live racing" id="live-track"></div>
     <div class="race-actions">
-      <span class="auto-status"></span>
+      <button class="btn-sm" data-view="dash">📋 Mode Jawaban</button>
+      <button class="btn-sm" id="btn-fs">⛶ Layar penuh</button>
       <button class="cta btn-pause">⏸ Jeda</button>
     </div>
   </section>
@@ -619,7 +643,7 @@ const firebaseConfig = {
   measurementId: "G-CLEP11LDMQ"
 };
 // --- GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA ---
-const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbzRB-R5UHYxdQ-AOqJmezfU6ejKexumn4l2fpR_T7p7VelKs-2IyRnYky7BE9O-2IzW/exec";
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbylDJ5Ka5eGU_5Ze9PUIlzPsF-6cl2t2UNxijhVXAJ7XoVNwQEeDYQE18zcqvJlhxvN/exec";
 
 const db = getFirestore(initializeApp(firebaseConfig));
 
@@ -727,7 +751,7 @@ function handleBack(){
     case 's-help': case 's-join': case 's-host-setup': show('s-home'); break;
     case 's-host-lobby':
       if(confirm('Tutup ruangan? Semua peserta akan dikeluarkan.')){ closeRoom(); show('s-host-setup'); } break;
-    case 's-host-q': case 's-host-race': {
+    case 's-host-dash': case 's-host-screen': {
       const was = H.paused; if(!was) setPaused(true);
       if(confirm('Kembali dan akhiri lomba? Juara ditentukan dari nilai sampai soal terakhir yang sudah dinilai.\n\nPilih Batal untuk melanjutkan lomba.')) finishGame();
       else if(!was) setPaused(false);
@@ -745,7 +769,8 @@ function handleBack(){
 function cleanup(){
   S.unsubs.forEach(u => { try{ u(); }catch{} }); S.unsubs = [];
   if(H.ansUnsub){ H.ansUnsub(); H.ansUnsub = null; }
-  phaseStop(); cancelAnimationFrame(H.raf); clearInterval(P.timer);
+  clearInterval(P.timer); H.playing = false;
+  if(document.fullscreenElement) document.exitFullscreen().catch(() => {});
   H.paused = false; document.body.classList.remove('is-paused');
   document.querySelectorAll('.btn-pause').forEach(b => b.textContent = '⏸ Jeda');
 }
@@ -892,13 +917,14 @@ async function createRoom(){
     S.pin = pin; document.body.classList.add('host-mode');
     // Hanya info umum yang disimpan di server. Kunci jawaban tetap di perangkat host.
     await setDoc(roomRef(), { status: 'lobby', title: S.title, sesiTotal: S.sessions, total: S.game.length, duration: S.time, qIndex: -1, createdAt: serverTimestamp() });
-    H.players = {}; H.prev = {}; H.prevScore = {}; H.qi = -1;
+    H.players = {}; H.stat = {}; H.prog = {}; H.scored = new Set(); H.qStats = {}; H.livePos = {}; H.moveT = {};
+    H.view = 'dash'; H.playing = false; H.started = false; H.paused = false; H.ansUnsub = null;
     H.sess = 0; H.sessStart = {}; H.sessDone = new Set(); H.sessScores = {}; H.totalSent = false;
     H.colorOf = {}; H.order = {}; H.nextColor = 0; H.palette = shuffle([...PALETTE]); H.hueOff = Math.random() * 360;
     S.unsubs.push(onSnapshot(collection(db, 'rooms', pin, 'players'), snap => {
       const p = {}; snap.forEach(d => p[d.id] = { id: d.id, ...d.data() });
       assignColors(p);
-      H.players = p; renderLobby(); if(current === 's-host-q') updateAnswered();
+      H.players = p; renderLobby(); scheduleRender(); checkSessionDone();
     }));
     $('#display-pin').textContent = pin;
     $('#lobby-title').textContent = S.title;
@@ -926,77 +952,171 @@ async function closeRoom(){
   cleanup();
 }
 
-/* ======================= HOST: JALANNYA LOMBA ======================= */
-$('#btn-start-game').addEventListener('click', () => startQuestion(0));
+/* ======================= HOST: LOMBA (PESERTA LANJUT SENDIRI) ======================= */
+// Peserta menjawab di HP masing-masing dan soal berikutnya langsung muncul.
+// Host menilai di perangkatnya sendiri (kunci tidak pernah dikirim ke peserta),
+// lalu memantau lewat Mode Jawaban atau menampilkan balapan lewat Mode Layar.
+const RW = 170;
+$('#btn-start-game').addEventListener('click', () => startSession(0));
 
-/* Alur otomatis: soal → jawaban (4 dtk) → balapan → jeda 3,5 dtk → soal berikutnya.
-   Host hanya punya Jeda / Lanjut dan Kembali. */
-const REVEAL_MS = 4000, AFTER_RACE_MS = 3500;
-const clock = { name: '', end: 0, left: 0, fn: null, iv: null };
-function phaseStart(name, ms, fn){
-  clearInterval(clock.iv);
-  Object.assign(clock, { name, fn, left: ms, end: performance.now() + ms });
-  clock.iv = setInterval(phaseTick, 100); phaseTick();
+const sessLen = k => Math.min(S.per, S.game.length - k * S.per);
+const sessBase = k => k * S.per;
+const st = id => (H.stat[id] ||= { score: 0, benar: 0, streak: 0 });
+const progOf = id => H.prog[id] || 0;
+const ranked = () => Object.values(H.players).sort((a, b) => st(b.id).score - st(a.id).score);
+
+async function startSession(k){
+  H.sess = k; H.sessEnding = false; H.prog = {}; H.sessStart = {}; H.started = true;
+  Object.keys(H.players).forEach(id => { const s = st(id); H.sessStart[id] = { score: s.score, benar: s.benar }; });
+  const base = sessBase(k), len = sessLen(k);
+  const qs = S.game.slice(base, base + len).map(q => ({ text: q.text, options: q.options }));   // tanpa kunci
+  try{
+    await setDoc(roomRef(), { status: 'playing', sesiNo: k + 1, sesiTotal: S.sessions, qBase: base, sessQs: qs, duration: S.time, paused: false }, { merge: true });
+  }catch(err){ toast('Gagal memulai sesi: ' + fbErr(err)); return; }
+  H.playing = true;
+  if(!H.ansUnsub){
+    H.ansUnsub = onSnapshot(collection(db, 'rooms', S.pin, 'answers'), snap => {
+      snap.docChanges().forEach(ch => { if(ch.type === 'added') scoreAnswer(ch.doc.id, ch.doc.data()); });
+    });
+  }
+  showView(H.view || 'dash');
 }
-function phaseStop(){ clearInterval(clock.iv); clock.iv = null; clock.fn = null; clock.name = ''; }
-function phaseLeft(){ return H.paused ? clock.left : Math.max(0, clock.end - performance.now()); }
-function phaseTick(){
-  if(!clock.fn) return;
-  const left = phaseLeft();
-  if(clock.name === 'question') drawQTimer(left - 1000);   // 1 dtk cadangan untuk jawaban yang masih di jalan
-  setAutoStatus();
-  if(!H.paused && left <= 0){ const f = clock.fn; phaseStop(); f(); }
+
+function scoreAnswer(id, a){
+  if(H.scored.has(id)) return; H.scored.add(id);
+  const q = S.game[a.qi]; if(!q || !a.pid) return;
+  const s = st(a.pid), dur = S.time * 1000, ok = a.choice === q.answer;
+  let pts = 0;
+  if(ok){ const t = Math.min(Math.max(+a.ms || dur, 0), dur); pts = Math.round(1000 * (1 - (t / dur) / 2)); }  // 500–1000
+  s.streak = ok ? s.streak + 1 : 0;
+  if(ok && s.streak >= 3) pts += 100;                                                                           // bonus beruntun
+  s.score += pts; s.benar += ok ? 1 : 0;
+  const qs = (H.qStats[a.qi] ||= { ans: 0, ok: 0 }); qs.ans++; if(ok) qs.ok++;
+  if(Math.floor(a.qi / S.per) === H.sess) H.prog[a.pid] = progOf(a.pid) + 1;
+  if(H.players[a.pid]){
+    setDoc(doc(db, 'rooms', S.pin, 'players', a.pid), { score: s.score, benar: s.benar, streak: s.streak, prog: progOf(a.pid) }, { merge: true }).catch(() => {});
+  }
+  scheduleRender(); checkSessionDone();
 }
-function drawQTimer(rem){
-  const dur = S.time * 1000, C = 2 * Math.PI * 44, ring = $('#hq-ring');
-  rem = Math.max(0, Math.min(dur, rem));
-  $('#hq-sec').textContent = Math.ceil(rem / 1000);
-  ring.style.strokeDasharray = C; ring.style.strokeDashoffset = C * (1 - rem / dur);
-  $('#hq-timer').classList.toggle('hurry', rem <= 5000);
+
+function checkSessionDone(){
+  if(!H.playing || H.sessEnding) return;
+  const ids = Object.keys(H.players); if(!ids.length) return;
+  const len = sessLen(H.sess);
+  if(ids.every(id => progOf(id) >= len)){
+    H.sessEnding = true;
+    setTimeout(endOrFinish, 2000);   // beri waktu ulat terakhir sampai
+  }
 }
-function setAutoStatus(){
-  const s = Math.ceil(phaseLeft() / 1000), last = H.qi + 1 >= S.game.length;
-  let txt = '';
-  if(H.paused) txt = '⏸ Lomba dijeda';
-  else if(clock.name === 'question') txt = 'Jawaban tampil otomatis saat waktu habis';
-  else if(clock.name === 'reveal') txt = `🐛 Balapan dimulai dalam ${s} dtk`;
-  else if(clock.name === 'afterRace') txt = last ? `🏆 Juara diumumkan dalam ${s} dtk` : isSessEnd(H.qi) ? `📊 Peringkat sesi ${sessOf(H.qi) + 1} dalam ${s} dtk` : `Soal berikutnya dalam ${s} dtk`;
-  else if(current === 's-host-race') txt = '🏁 Balapan berlangsung';
-  document.querySelectorAll('.auto-status').forEach(e => e.textContent = txt);
-}
+function endOrFinish(){ if(H.sess + 1 >= S.sessions) finishGame(); else endSession(); }
+$('#btn-end-sess').addEventListener('click', () => {
+  if(confirm(`Akhiri sesi ${H.sess + 1} sekarang? Peserta yang belum selesai tidak bisa menjawab lagi di sesi ini.`)){ H.sessEnding = true; endOrFinish(); }
+});
+
+/* ---------- Jeda ---------- */
 function setPaused(v){
   if(H.paused === v) return;
-  if(v) clock.left = Math.max(0, clock.end - performance.now());
-  else clock.end = performance.now() + clock.left;
   H.paused = v;
   document.body.classList.toggle('is-paused', v);
   document.querySelectorAll('.btn-pause').forEach(b => b.textContent = v ? '▶ Lanjut' : '⏸ Jeda');
-  setAutoStatus();
-  H.pauseSeq = (H.pauseSeq || 0) + 1;
-  const remaining = clock.name === 'question' ? Math.max(0, Math.round(clock.left - 1000)) : null;
-  setDoc(roomRef(), { paused: v, remaining, pauseSeq: H.pauseSeq }, { merge: true }).catch(() => {});
+  setDoc(roomRef(), { paused: v }, { merge: true }).catch(() => {});
 }
 document.addEventListener('click', e => { if(e.target.closest('.btn-pause')) setPaused(!H.paused); });
-const sessOf = qi => Math.floor(qi / S.per);
-const sessLen = k => Math.min(S.per, S.game.length - k * S.per);
-function qLabel(short){
-  const k = sessOf(H.qi), no = H.qi - k * S.per + 1;
-  if(S.sessions <= 1) return short ? `Soal ${H.qi + 1}/${S.game.length}` : `${H.qi + 1} dari ${S.game.length}`;
-  return short ? `Sesi ${k + 1} · Soal ${no}/${sessLen(k)}` : `${no}/${sessLen(k)} · Sesi ${k + 1} dari ${S.sessions}`;
+
+/* ---------- Mode Jawaban & Mode Layar ---------- */
+function showView(v){
+  H.view = v;
+  if(v === 'screen'){ show('s-host-screen'); $('#live-track').dataset.key = ''; renderLive(); }
+  else { show('s-host-dash'); renderDash(); if(document.fullscreenElement) document.exitFullscreen().catch(() => {}); }
 }
-const isSessEnd = qi => (qi + 1) % S.per === 0 || qi + 1 >= S.game.length;
-function nextStep(){
-  cancelRace(true);
-  if(H.qi + 1 >= S.game.length) finishGame();
-  else if(isSessEnd(H.qi)) endSession();
-  else startQuestion(H.qi + 1);
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-view]'); if(!b) return;
+  showView(b.dataset.view);
+  if(b.dataset.view === 'screen') document.documentElement.requestFullscreen?.().catch(() => {});
+});
+$('#btn-fs').addEventListener('click', () => {
+  if(document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else document.documentElement.requestFullscreen?.().catch(() => {});
+});
+const relayout = () => { $('#live-track').dataset.key = ''; renderLive(); };
+document.addEventListener('fullscreenchange', relayout);
+window.addEventListener('resize', relayout);
+
+let rq = 0;
+function scheduleRender(){ if(rq) return; rq = requestAnimationFrame(() => { rq = 0; renderDash(); renderLive(); }); }
+
+function renderDash(){
+  if(current !== 's-host-dash') return;
+  const k = H.sess, base = sessBase(k), len = sessLen(k);
+  $('#dash-title').textContent = S.sessions > 1 ? `Sesi ${k + 1} dari ${S.sessions}` : 'Mode Jawaban';
+  $('#dash-qs').innerHTML = S.game.slice(base, base + len).map((q, i) => {
+    const s = H.qStats[base + i] || { ans: 0, ok: 0 }, pct = s.ans ? Math.round(s.ok / s.ans * 100) : 0;
+    return `<li class="dq"><p>${i + 1}. ${esc(q.text)}</p>
+      <div class="key">🔑 ${LETTERS[q.answer]}. ${esc(q.options[q.answer])}</div>
+      <small>${s.ans} menjawab · ${s.ok} benar${s.ans ? ` (${pct}%)` : ''}</small>
+      <div class="bar2"><i style="width:${pct}%"></i></div></li>`;
+  }).join('');
+  const list = ranked(), done = list.filter(p => progOf(p.id) >= len).length;
+  $('#dash-done').textContent = `${done}/${list.length} selesai`;
+  $('#dash-players').innerHTML = `<tr><th>#</th><th>Nama</th><th>Progres</th><th class="num">Benar</th><th class="num">Skor</th></tr>` +
+    (list.length ? list.map((p, i) => {
+      const pr = Math.min(progOf(p.id), len), s = st(p.id);
+      return `<tr><td>${i + 1}</td><td><span class="nm">${ulat(pc(p.id), 'sm')}${esc(p.nama)}</span></td>
+        <td><div class="prog"><i style="width:${pr / len * 100}%"></i></div><small class="muted">${pr}/${len}${pr >= len ? ' ✅' : ''}</small></td>
+        <td class="num">${s.benar}</td><td class="num">${s.score}</td></tr>`;
+    }).join('') : '<tr><td colspan="5" class="muted">Belum ada peserta.</td></tr>');
 }
 
-/* ---------- Sesi & rekap spreadsheet ---------- */
+// Balapan langsung: tiap jawaban benar membuat ulat maju satu langkah; ulat yang semua benar sampai di daun.
+function renderLive(){
+  if(current !== 's-host-screen') return;
+  const track = $('#live-track'), len = sessLen(H.sess), total = S.game.length;
+  const lanes = Object.values(H.players).sort((a, b) => (H.order[a.id] ?? 999) - (H.order[b.id] ?? 999)).slice(0, 30);
+  const key = lanes.map(p => p.id).join(',');
+  if(track.dataset.key !== key){
+    track.dataset.key = key;
+    const avail = window.innerHeight - 210;
+    track.style.setProperty('--lane-h', Math.max(38, Math.min(92, Math.floor(avail / Math.max(1, lanes.length)) - 10)) + 'px');
+    track.innerHTML = lanes.length ? lanes.map(p => `
+      <div class="lane" data-id="${p.id}">
+        <div class="rank">–</div>
+        <div class="road"><span class="finish"></span><span class="leaf">🍃</span>
+          <div class="runner" style="left:${posCss(H.livePos[p.id] || 0, RW)}">
+            <span class="tag"><b class="crown-mini">👑</b>${esc(p.nama)} <span class="pg"></span></span>
+            <span class="dust"></span>${ulat(pc(p.id))}
+          </div>
+        </div>
+        <div class="sc">0</div>
+      </div>`).join('') : '<p class="more">Menunggu peserta…</p>';
+  }
+  const order = ranked().map(p => p.id);
+  lanes.forEach(p => {
+    const lane = track.querySelector(`.lane[data-id="${p.id}"]`); if(!lane) return;
+    const s = st(p.id), pos = s.benar / total, runner = lane.querySelector('.runner');
+    if(H.livePos[p.id] !== pos){
+      void runner.offsetWidth;
+      runner.style.left = posCss(pos, RW);
+      runner.classList.add('moving'); clearTimeout(H.moveT[p.id]);
+      H.moveT[p.id] = setTimeout(() => runner.classList.remove('moving'), 1400);
+      H.livePos[p.id] = pos;
+    }
+    lane.querySelector('.sc').textContent = s.score;
+    const pr = Math.min(progOf(p.id), len);
+    lane.querySelector('.pg').textContent = pr >= len ? '✅' : `${pr}/${len}`;
+    const r = order.indexOf(p.id) + 1, rk = lane.querySelector('.rank');
+    if(rk.textContent !== String(r)){ rk.textContent = r; rk.className = 'rank'; void rk.offsetWidth; rk.className = 'rank bump' + (r <= 3 ? ' r' + r : ''); }
+    lane.classList.toggle('lead', r === 1 && s.score > 0);
+  });
+  $('#scr-title').textContent = S.sessions > 1 ? `Balapan Ulat · Sesi ${H.sess + 1}` : 'Balapan Ulat';
+  const done = Object.keys(H.players).filter(id => progOf(id) >= len).length;
+  $('#scr-done').textContent = `${done}/${Object.keys(H.players).length} selesai`;
+}
+
+/* ---------- Akhir sesi & rekap spreadsheet ---------- */
 function sessionRows(){
   const rows = Object.values(H.players).map(p => {
-    const st = H.sessStart[p.id] || { score: 0, benar: 0 };
-    return { id: p.id, nama: p.nama, skor_sesi: (p.score || 0) - st.score, benar: (p.benar || 0) - st.benar, total: p.score || 0 };
+    const s = st(p.id), b = H.sessStart[p.id] || { score: 0, benar: 0 };
+    return { id: p.id, nama: p.nama, skor_sesi: s.score - b.score, benar: s.benar - b.benar, total: s.score };
   }).sort((a, b) => b.skor_sesi - a.skor_sesi || b.total - a.total);
   rows.forEach((r, i) => r.peringkat = i + 1);
   return rows;
@@ -1033,9 +1153,10 @@ const podiumHTML = list => {
   return step(list[1], 2) + step(list[0], 1) + step(list[2], 3);
 };
 async function endSession(){
-  cancelRace(true); phaseStop();
+  H.playing = false;
   const k = H.sess, rows = await closeSession() || sessionRows();
   try{ await setDoc(roomRef(), { status: 'session', sesiNo: k + 1, sesiTotal: S.sessions, paused: false }, { merge: true }); }catch{}
+  if(H.paused){ H.paused = true; setPaused(false); }
   $('#sess-title').textContent = `Peringkat Sesi ${k + 1}`;
   $('#sess-sub').textContent = `${S.sessions - k - 1} sesi lagi`;
   $('#sess-podium').innerHTML = podiumHTML(rows.map(r => ({ id: r.id, nama: r.nama, pts: r.skor_sesi })));
@@ -1043,225 +1164,31 @@ async function endSession(){
     (rows.length ? rows.map(r => `<tr><td>${r.peringkat}</td><td>${esc(r.nama)}</td><td class="num">${r.benar}/${sessLen(k)}</td><td class="num">${r.skor_sesi}</td><td class="num">${r.total}</td></tr>`).join('')
       : '<tr><td colspan="5" class="muted">Tidak ada peserta.</td></tr>');
   $('#btn-next-session').textContent = `▶ Lanjut ke sesi ${k + 2}`;
-  const st = $('#sess-sheet');
-  st.textContent = GOOGLE_SHEETS_URL.startsWith('URL_') ? '' : '📊 Mengirim rekap ke spreadsheet…';
+  const el = $('#sess-sheet');
+  el.textContent = GOOGLE_SHEETS_URL.startsWith('URL_') ? '' : '📊 Mengirim rekap ke spreadsheet…';
   show('s-host-session');
-  if(await H.lastSheet) st.textContent = `📊 Rekap sesi ${k + 1} terkirim ke spreadsheet`;
+  if(await H.lastSheet) el.textContent = `📊 Rekap sesi ${k + 1} terkirim ke spreadsheet`;
 }
-$('#btn-next-session').addEventListener('click', () => startQuestion(H.qi + 1));
+$('#btn-next-session').addEventListener('click', () => startSession(H.sess + 1));
 
-async function startQuestion(i){
-  if(i % S.per === 0){
-    H.sess = sessOf(i); H.sessStart = {};
-    Object.values(H.players).forEach(p => H.sessStart[p.id] = { score: p.score || 0, benar: p.benar || 0 });
-  }
-  H.qi = i; H.revealed = false; H.answers = {};
-  const q = S.game[i];
-  try{
-    await setDoc(roomRef(), { status: 'question', qIndex: i, q: { text: q.text, options: q.options }, duration: S.time, dist: null, paused: false }, { merge: true });
-  }catch(err){ toast('Gagal mengirim soal: ' + fbErr(err)); return; }
-  if(H.ansUnsub) H.ansUnsub();
-  H.ansUnsub = onSnapshot(collection(db, 'rooms', S.pin, 'rounds', String(i), 'answers'), snap => {
-    H.answers = {}; snap.forEach(d => H.answers[d.id] = d.data());
-    updateAnswered();
-    const n = Object.keys(H.players).length;
-    if(n && Object.keys(H.answers).filter(id => H.players[id]).length >= n) reveal();
-  });
-  renderHostQ(); show('s-host-q');
-  phaseStart('question', S.time * 1000 + 1000, reveal);
-}
-
-function renderHostQ(){
-  const q = S.game[H.qi], sec = $('#s-host-q');
-  $('#hq-num').textContent = qLabel();
-  $('#hq-text').textContent = q.text;
-  $('#hq-opts').innerHTML = q.options.map((o, i) => `
-    <div class="opt o${i} ${i === q.answer ? 'is-key' : ''}">
-      <span class="shape">${SHAPES[i]}</span><span class="otext">${esc(o)}</span>
-      <span class="keybadge">✓ Kunci</span><span class="cnt" data-cnt="${i}"></span>
-    </div>`).join('');
-  $('#hq-key b').textContent = `${LETTERS[q.answer]}. ${q.options[q.answer]}`;
-  sec.classList.remove('revealed'); sec.classList.toggle('show-key', H.showKey);
-  updateAnswered();
-}
-function updateAnswered(){
-  const n = Object.keys(H.players).length;
-  const a = Object.keys(H.answers).filter(id => H.players[id]).length;
-  $('#hq-answered').textContent = `${a}/${n}`;
-}
-$('#btn-toggle-key').addEventListener('click', () => {
-  H.showKey = !H.showKey;
-  $('#s-host-q').classList.toggle('show-key', H.showKey);
-  $('#btn-toggle-key').textContent = H.showKey ? '🙈 Sembunyikan kunci' : '🔑 Tampilkan kunci';
-});
-
-async function reveal(){
-  if(H.revealed) return; H.revealed = true;
-  phaseStop();
-  if(H.ansUnsub){ H.ansUnsub(); H.ansUnsub = null; }
-  const q = S.game[H.qi], dur = S.time * 1000, dist = q.options.map(() => 0);
-  const batch = writeBatch(db);
-  for(const p of Object.values(H.players)){
-    const a = H.answers[p.id]; let pts = 0, ok = false;
-    if(a && a.choice >= 0 && a.choice < dist.length){
-      dist[a.choice]++;
-      if(a.choice === q.answer){
-        ok = true;
-        const t = Math.min(Math.max(+a.ms || dur, 0), dur);
-        pts = Math.round(1000 * (1 - (t / dur) / 2));   // 500–1000 poin, makin cepat makin besar
-      }
-    }
-    const streak = ok ? (p.streak || 0) + 1 : 0;
-    if(ok && streak >= 3) pts += 100;
-    const upd = { score: (p.score || 0) + pts, lastPoints: pts, lastCorrect: ok, answered: !!a, streak, benar: (p.benar || 0) + (ok ? 1 : 0), round: H.qi };
-    batch.set(doc(db, 'rooms', S.pin, 'players', p.id), upd, { merge: true });
-    H.players[p.id] = { ...p, ...upd };
-  }
-  try{
-    await batch.commit();
-    await setDoc(roomRef(), { status: 'reveal', dist }, { merge: true });
-  }catch(err){ toast('Gagal menyimpan skor: ' + fbErr(err)); }
-  const sec = $('#s-host-q'); sec.classList.add('revealed');
-  dist.forEach((n, i) => { const c = sec.querySelector(`[data-cnt="${i}"]`); if(c) c.textContent = `${n} orang`; });
-  drawQTimer(0);
-  phaseStart('reveal', REVEAL_MS, showRace);
-}
-
-const RACE_MS = 5000, RW = 170;
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-function showRace(){
-  cancelRace(false);
-  const all = Object.values(H.players);
-  const lead = all.reduce((m, p) => Math.max(m, p.score || 0), 0);
-  const frac = (H.qi + 1) / S.game.length;
-  const target = p => lead > 0 ? frac * (p.score || 0) / lead : 0;
-  H.raceAll = all.map(p => ({ id: p.id, to: target(p), s1: p.score || 0 }));
-  // 12 teratas ditampilkan; urutan lintasan tetap (urutan masuk) supaya penonton mudah mengikuti ulatnya
-  const shown = [...all].sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 12)
-    .sort((a, b) => (H.order[a.id] ?? 999) - (H.order[b.id] ?? 999));
-  H.race = shown.map(p => ({ id: p.id, p, from: H.prev[p.id] || 0, to: target(p), s0: H.prevScore[p.id] || 0, s1: p.score || 0 }));
-  const track = $('#race-track');
-  track.innerHTML = H.race.length ? H.race.map(r => `
-    <div class="lane" data-id="${r.id}">
-      <div class="rank">–</div>
-      <div class="road"><span class="finish"></span><span class="leaf">🍃</span>
-        <div class="runner" style="left:${posCss(r.from, RW)}">
-          <span class="tag"><b class="crown-mini">👑</b>${esc(r.p.nama)}${r.p.lastCorrect ? ` <em class="gain">+${r.p.lastPoints}</em>` : ''}${(r.p.streak || 0) >= 2 ? ' <em class="fire">🔥</em>' : ''}</span>
-          <span class="dust"></span>${ulat(pc(r.id))}
-        </div>
-      </div>
-      <div class="sc">${r.s0}</div>
-    </div>`).join('') + (all.length > 12 ? `<p class="more">+${all.length - 12} peserta lainnya</p>` : '')
-    : '<p class="more">Belum ada peserta.</p>';
-  H.race.forEach(r => {
-    r.el = track.querySelector(`.lane[data-id="${r.id}"]`);
-    r.runner = r.el.querySelector('.runner'); r.rankEl = r.el.querySelector('.rank'); r.scEl = r.el.querySelector('.sc');
-  });
-  $('#race-progress').textContent = qLabel(true);
-  show('s-host-race');
-  runRace();
-}
-
-// Profil kecepatan acak: tiap ulat kadang ngebut, kadang melambat, jadi saling salip
-function speedCurve(){
-  const n = 7, cum = [0];
-  for(let i = 0; i < n; i++) cum.push(cum[i] + 0.2 + Math.random() * 1.8);
-  return cum.map(v => v / cum[n]);
-}
-function along(cum, t){
-  const n = cum.length - 1, x = t * n, i = Math.min(n - 1, Math.floor(x));
-  return cum[i] + (cum[i + 1] - cum[i]) * (x - i);
-}
-
-function runRace(){
-  cancelRace(false);
-  const track = $('#race-track'), cd = $('#race-count');
-  H.race.forEach(r => {
-    r.cum = speedCurve(); r.cur = r.from;
-    r.runner.style.left = posCss(r.from, RW); r.scEl.textContent = r.s0;
-    r.el.classList.remove('done', 'lead'); r.rankEl.textContent = '–'; r.rankEl.className = 'rank';
-  });
-  if(!H.race.length || reduceMotion){ endRace(); return; }
-  const steps = ['3', '2', '1', 'Gas!'], gap = 600, lead = steps.length * gap;
-  let el = 0, last = null, shownStep = -1, lastRank = 0;
-  const frame = now => {
-    if(last !== null && !H.paused) el += now - last;   // waktu berhenti saat dijeda
-    last = now;
-    if(el < lead){
-      const k = Math.floor(el / gap);
-      if(k !== shownStep){
-        shownStep = k; cd.hidden = false; cd.textContent = steps[k];
-        cd.classList.remove('zoom'); void cd.offsetWidth; cd.classList.add('zoom');
-      }
-    } else {
-      if(!cd.hidden){ cd.hidden = true; track.classList.add('racing'); }
-      const t = Math.min(1, (el - lead) / RACE_MS);
-      const e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-      H.race.forEach(r => {
-        const g = along(r.cum, e);
-        r.cur = r.from + (r.to - r.from) * g;
-        r.runner.style.left = posCss(r.cur, RW);
-        r.scEl.textContent = Math.round(r.s0 + (r.s1 - r.s0) * g);
-        r.runner.classList.toggle('moving', r.to > r.from + 1e-4 && t < 1);
-      });
-      if(now - lastRank > 150){ lastRank = now; liveRanks(false); }
-      if(t >= 1){ endRace(); return; }
-    }
-    H.raf = requestAnimationFrame(frame);
-  };
-  H.raf = requestAnimationFrame(frame);
-  setAutoStatus();
-}
-
-function liveRanks(final){
-  const order = [...H.race].sort((a, b) => final ? b.s1 - a.s1 : b.cur - a.cur);
-  order.forEach((r, i) => {
-    const n = String(i + 1);
-    if(r.rankEl.textContent !== n){
-      r.rankEl.textContent = n; r.rankEl.className = 'rank'; void r.rankEl.offsetWidth;
-      r.rankEl.className = 'rank bump' + (i < 3 ? ' r' + n : '');
-    }
-    r.el.classList.toggle('lead', i === 0 && (final ? r.s1 > 0 : r.cur > 0.001));
-  });
-}
-
-function endRace(){
-  cancelRace(true);
-  $('#race-count').hidden = true;
-  $('#race-track').classList.remove('racing');
-  H.race.forEach(r => {
-    r.cur = r.to; r.runner.style.left = posCss(r.to, RW); r.scEl.textContent = r.s1;
-    r.runner.classList.remove('moving'); r.el.classList.add('done');
-  });
-  liveRanks(true);
-  phaseStart('afterRace', AFTER_RACE_MS, nextStep);
-}
-
-function cancelRace(commit){
-  cancelAnimationFrame(H.raf); H.raceTimers.forEach(clearTimeout); H.raceTimers = [];
-  if(commit) H.raceAll.forEach(r => { H.prev[r.id] = r.to; H.prevScore[r.id] = r.s1; });
-}
 async function finishGame(){
-  cancelRace(true);
-  phaseStop();
-  if(H.paused){ H.paused = false; document.body.classList.remove('is-paused'); document.querySelectorAll('.btn-pause').forEach(b => b.textContent = '⏸ Jeda'); }
+  H.playing = false; H.sessEnding = true;
+  if(H.paused){ setPaused(false); }
+  if(H.started && !H.sessDone.has(H.sess) && Object.keys(H.prog).length) await closeSession();
   if(H.ansUnsub){ H.ansUnsub(); H.ansUnsub = null; }
-  // rekap sesi yang sedang berjalan (jika sudah ada soal yang dinilai), lalu rekap total
-  if(H.qi >= 0 && !H.sessDone.has(H.sess) && (H.revealed || H.qi > H.sess * S.per)) await closeSession();
   try{ await setDoc(roomRef(), { status: 'finished', paused: false }, { merge: true }); }catch{}
+  if(document.fullscreenElement) document.exitFullscreen().catch(() => {});
   renderPodium(); show('s-host-end');
-  if(!H.totalSent && H.qi >= 0){
+  if(!H.totalSent && H.started){
     H.totalSent = true;
-    const st = $('#export-status');
-    if(!GOOGLE_SHEETS_URL.startsWith('URL_')) st.textContent = '📊 Mengirim rekap ke spreadsheet…';
-    if(await sendSheet('Total', totalRows())) st.textContent = '📊 Rekap sesi dan total sudah terkirim ke spreadsheet.';
+    const el = $('#export-status');
+    if(!GOOGLE_SHEETS_URL.startsWith('URL_')) el.textContent = '📊 Mengirim rekap ke spreadsheet…';
+    if(await sendSheet('Total', totalRows())) el.textContent = '📊 Rekap sesi dan total sudah terkirim ke spreadsheet.';
   }
 }
-const ranking = () => Object.values(H.players).sort((a, b) => (b.score || 0) - (a.score || 0));
-const totalRows = () => ranking().map((p, i) => ({ id: p.id, peringkat: i + 1, nama: p.nama, benar: p.benar || 0, total: p.score || 0 }));
+const totalRows = () => ranked().map((p, i) => ({ id: p.id, peringkat: i + 1, nama: p.nama, benar: st(p.id).benar, total: st(p.id).score }));
 function renderPodium(){
-  const list = totalRows(), multi = S.sessions > 1, nS = Math.min(S.sessions, H.sessDone.size || 1);
+  const list = totalRows(), multi = S.sessions > 1, nS = Math.max(1, H.sessDone.size);
   $('#podium').innerHTML = podiumHTML(list.map(r => ({ id: r.id, nama: r.nama, pts: r.total })));
   const sHead = multi ? Array.from({ length: nS }, (_, k) => `<th class="num">Sesi ${k + 1}</th>`).join('') : '';
   const sCells = id => multi ? Array.from({ length: nS }, (_, k) => `<td class="num">${H.sessScores[id]?.[k] ?? 0}</td>`).join('') : '';
@@ -1307,7 +1234,8 @@ async function joinRoom(){
     const snap = await getDoc(doc(db, 'rooms', pin));
     if(!snap.exists() || ['closed','finished'].includes(snap.data().status)) throw new Error('PIN tidak ditemukan atau lomba sudah selesai.');
     try{ localStorage.setItem('balapUlatNama', name); }catch{}
-    S.pin = pin; P.name = name; document.body.classList.remove('host-mode'); P.leaving = false; P.lastQ = -1; P.me = null; P.all = [];
+    S.pin = pin; P.name = name; document.body.classList.remove('host-mode');
+    P.leaving = false; P.me = null; P.all = []; P.sessNo = null; P.qs = []; P.i = 0;
     P.id = 'p' + Math.random().toString(36).slice(2, 10);
     P.color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
     await setDoc(doc(db, 'rooms', pin, 'players', P.id), { nama: name, color: P.color, score: 0, benar: 0, streak: 0, joinedAt: serverTimestamp() });
@@ -1318,13 +1246,14 @@ async function joinRoom(){
         return;
       }
       P.me = s.data();
-      if(P.me.color && P.me.color !== P.color){ P.color = P.me.color; if(current === 's-p-wait' && P.room?.status === 'lobby') renderWait('lobby'); }
+      if(P.me.color && P.me.color !== P.color){ P.color = P.me.color; if(current === 's-p-wait') renderWait(P.waitMode); }
+      else if(current === 's-p-wait' && P.waitMode === 'done') renderWait('done');
       if(current === 's-p-feedback') renderFeedback();
     }));
     S.unsubs.push(onSnapshot(collection(db, 'rooms', pin, 'players'), s => {
       P.all = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0));
       if(current === 's-p-feedback') renderFeedback();
-      if(current === 's-p-wait' && P.room?.status === 'lobby') renderWait('lobby');
+      if(current === 's-p-wait') renderWait(P.waitMode);
     }));
     renderWait('lobby'); show('s-p-wait');
   }catch(err){ toast(fbErr(err)); }
@@ -1344,68 +1273,69 @@ function onRoom(d){
     if(!P.leaving){ cleanup(); toast('Ruangan sudah ditutup host.'); show('s-home'); }
     return;
   }
-  document.body.classList.toggle('is-paused', !!d.paused && d.status !== 'finished');
+  document.body.classList.toggle('is-paused', !!d.paused && d.status === 'playing');
   if(d.status === 'lobby'){ renderWait('lobby'); show('s-p-wait'); }
-  else if(d.status === 'question'){
-    if(d.qIndex !== P.lastQ){
-      P.lastQ = d.qIndex; P.answered = false; P.choice = -1; P.recv = performance.now(); P.pauseSeq = d.pauseSeq;
-      renderPlay(); show('s-p-play');
-    } else if(d.pauseSeq !== P.pauseSeq){
-      P.pauseSeq = d.pauseSeq;
-      // setelah dilanjutkan, samakan sisa waktu dengan host
-      if(!d.paused && typeof d.remaining === 'number') P.recv = performance.now() - ((d.duration || 15) * 1000 - d.remaining);
+  else if(d.status === 'playing'){
+    if(d.sesiNo !== P.sessNo){
+      P.sessNo = d.sesiNo; P.qs = d.sessQs || []; P.base = d.qBase || 0; P.dur = (d.duration || 15) * 1000; P.i = 0;
+      showQ();
     }
   }
-  else if(d.status === 'reveal' || d.status === 'session'){ clearInterval(P.timer); renderFeedback(); show('s-p-feedback'); }
+  else if(d.status === 'session'){ clearInterval(P.timer); renderFeedback(); show('s-p-feedback'); }
   else if(d.status === 'finished'){ clearInterval(P.timer); renderEnd(); show('s-p-end'); }
 }
 
 function renderWait(mode){
+  P.waitMode = mode;
   $('#pw-name').textContent = P.name;
   const box = $('#pw-box');
-  if(mode === 'lobby'){
+  if(mode === 'done'){
+    box.innerHTML = `${ulat(P.color, 'xl')}<p class="fb-title">Sesi ${P.room?.sesiNo || ''} selesai ✅</p>
+      <p class="muted">Semua soal sudah kamu jawab. Tunggu peserta lain, lalu peringkat sesi muncul.</p>
+      <div class="stat-row"><span class="stat">${P.me?.score || 0} poin</span><span class="stat">${P.me?.benar || 0} benar</span></div>`;
+  } else {
     box.innerHTML = `${ulat(P.color, 'xl')}<p class="fb-title">Kamu sudah masuk!</p>
       <p class="muted">Cari namamu di layar host. Lomba dimulai sebentar lagi.</p>
       <span class="stat">${P.all.length || 1} peserta di ruangan</span>`;
-  } else if(mode === 'sent'){
-    const i = P.choice;
-    box.innerHTML = `<div class="pbtn o${i}" style="width:120px;height:120px;box-shadow:none"><span class="shape">${SHAPES[i]}</span></div>
-      <p class="fb-title">Jawaban terkirim ⚡</p><p class="muted">Tunggu peserta lain dan lihat layar host.</p>`;
-  } else {
-    box.innerHTML = `<div class="big-icon">⏱</div><p class="fb-title">Waktu habis</p><p class="muted">Siap-siap untuk soal berikutnya.</p>`;
   }
 }
 
-function renderPlay(){
-  const d = P.room, q = d.q;
-  $('#pp-num').textContent = `Soal ${d.qIndex + 1}/${d.total}`;
+// Soal tampil satu per satu. Setelah memilih (atau waktu habis), soal berikutnya langsung muncul.
+function showQ(){
+  clearInterval(P.timer);
+  if(P.room?.status !== 'playing') return;
+  if(P.i >= P.qs.length){ renderWait('done'); show('s-p-wait'); return; }
+  const d = P.room, q = P.qs[P.i];
+  $('#pp-num').textContent = (d.sesiTotal > 1 ? `Sesi ${d.sesiNo} · ` : '') + `Soal ${P.i + 1}/${P.qs.length}`;
   $('#pp-text').textContent = q.text;
   const box = $('#pp-opts');
   box.className = 'pbtns n' + q.options.length;
   box.innerHTML = q.options.map((o, i) => `<button class="pbtn o${i}" data-a="${i}"><span class="shape">${SHAPES[i]}</span><span>${esc(o)}</span></button>`).join('');
-  clearInterval(P.timer);
-  const dur = (d.duration || 15) * 1000;
-  const tick = () => {
-    if(P.room?.paused) return;
-    const rem = Math.max(0, dur - (performance.now() - P.recv));
-    $('#pp-sec').textContent = Math.ceil(rem / 1000) + ' dtk';
-    $('#pp-bar').style.width = (rem / dur * 100) + '%';
-    if(rem <= 0){
-      clearInterval(P.timer);
-      if(!P.answered && current === 's-p-play'){ P.answered = true; renderWait('timeout'); show('s-p-wait'); }
-    }
-  };
-  tick(); P.timer = setInterval(tick, 150);
+  P.locked = false; P.left = P.dur;
+  let last = performance.now();
+  const draw = () => { $('#pp-sec').textContent = Math.ceil(Math.max(0, P.left) / 1000) + ' dtk'; $('#pp-bar').style.width = Math.max(0, P.left / P.dur * 100) + '%'; };
+  draw(); show('s-p-play');
+  P.timer = setInterval(() => {
+    const now = performance.now(), dt = now - last; last = now;
+    if(P.room?.paused) return;               // waktu berhenti saat dijeda host
+    P.left -= dt; draw();
+    if(P.left <= 0) submit(-1);
+  }, 100);
 }
-$('#pp-opts').addEventListener('click', async e => {
-  const b = e.target.closest('[data-a]'); if(!b || P.answered || P.room?.paused) return;
-  P.answered = true; P.choice = +b.dataset.a;
-  const ms = Math.round(performance.now() - P.recv), qi = P.lastQ;
-  clearInterval(P.timer);
-  renderWait('sent'); show('s-p-wait');
-  try{
-    await setDoc(doc(db, 'rooms', S.pin, 'rounds', String(qi), 'answers', P.id), { choice: P.choice, ms, nama: P.name });
-  }catch(err){ toast('Jawaban gagal terkirim: ' + fbErr(err)); }
+function submit(choice){
+  if(P.locked) return; P.locked = true; clearInterval(P.timer);
+  const qi = P.base + P.i, ms = Math.round(Math.min(P.dur, P.dur - Math.max(0, P.left)));
+  setDoc(doc(db, 'rooms', S.pin, 'answers', `${P.id}_${qi}`), { pid: P.id, qi, choice, ms, nama: P.name })
+    .catch(err => toast('Jawaban gagal terkirim: ' + fbErr(err)));
+  const box = $('#pp-opts'); box.classList.add('lock');
+  if(choice >= 0) box.querySelector(`[data-a="${choice}"]`)?.classList.add('picked');
+  else $('#pp-sec').textContent = 'Waktu habis';
+  P.i++;
+  setTimeout(showQ, choice >= 0 ? 350 : 800);
+}
+$('#pp-opts').addEventListener('click', e => {
+  const b = e.target.closest('[data-a]'); if(!b || P.locked || P.room?.paused) return;
+  submit(+b.dataset.a);
 });
 
 function myRank(){ const i = P.all.findIndex(p => p.id === P.id); return i < 0 ? '-' : i + 1; }
@@ -1413,28 +1343,13 @@ function renderFeedback(){
   const d = P.room, me = P.me; if(!d) return;
   $('#pf-name').textContent = P.name;
   const box = $('#pf-box');
-  if(d.status === 'session'){
-    if(!me || me.sesiNo !== d.sesiNo){ box.className = 'p-card'; box.innerHTML = `<div class="big-icon">⏳</div><p class="fb-title">Menghitung peringkat…</p>`; return; }
-    const r = me.sesiRank, medal = r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : '🏁';
-    box.className = 'p-card';
-    box.innerHTML = `<div class="big-icon">${medal}</div><p class="fb-title">Sesi ${d.sesiNo} selesai!</p>
-      <div class="stat-row"><span class="stat">Peringkat sesi ${r} dari ${me.sesiJumlah}</span><span class="stat">${me.sesiSkor} poin sesi ini</span></div>
-      <div class="stat-row"><span class="stat">Total ${me.score || 0} poin</span><span class="stat">Peringkat total ${myRank()}</span></div>
-      <p class="muted">Sesi ${d.sesiNo + 1} dari ${d.sesiTotal} dimulai saat host melanjutkan.</p>`;
-    return;
-  }
-  if(!me || me.round !== d.qIndex){
-    box.className = 'p-card'; box.innerHTML = `<div class="big-icon">⏳</div><p class="fb-title">Menghitung skor…</p>`; return;
-  }
-  const lead = P.all[0]?.score || 0, prog = lead ? (me.score || 0) / lead : 0;
-  let icon, title, sub = '';
-  if(me.lastCorrect){ icon = '✅'; title = 'Benar!'; sub = `+${me.lastPoints} poin${(me.streak || 0) >= 2 ? ` · 🔥 ${me.streak}× beruntun` : ''}`; }
-  else if(!me.answered){ icon = '⏱'; title = 'Tidak menjawab'; }
-  else { icon = '❌'; title = 'Belum tepat'; sub = 'Lihat jawaban yang benar di layar host.'; }
-  box.className = 'p-card ' + (me.lastCorrect ? 'fb-ok' : 'fb-bad');
-  box.innerHTML = `<div class="big-icon">${icon}</div><p class="fb-title">${title}</p>${sub ? `<p>${sub}</p>` : ''}
-    <div class="mini-track"><span class="leaf">🍃</span><div class="runner" style="left:${posCss(prog * .92, 90)}">${ulat(P.color, 'sm')}</div></div>
-    <div class="stat-row"><span class="stat">Peringkat ${myRank()} dari ${P.all.length}</span><span class="stat">${me.score || 0} poin</span></div>`;
+  if(!me || me.sesiNo !== d.sesiNo){ box.className = 'p-card'; box.innerHTML = `<div class="big-icon">⏳</div><p class="fb-title">Menghitung peringkat…</p>`; return; }
+  const r = me.sesiRank, medal = r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : '🏁';
+  box.className = 'p-card';
+  box.innerHTML = `<div class="big-icon">${medal}</div>${ulat(P.color, 'lg')}<p class="fb-title">Sesi ${d.sesiNo} selesai!</p>
+    <div class="stat-row"><span class="stat">Peringkat sesi ${r} dari ${me.sesiJumlah}</span><span class="stat">${me.sesiSkor} poin sesi ini</span></div>
+    <div class="stat-row"><span class="stat">Total ${me.score || 0} poin</span><span class="stat">Peringkat total ${myRank()}</span></div>
+    <p class="muted">Sesi ${d.sesiNo + 1} dari ${d.sesiTotal} dimulai saat host melanjutkan.</p>`;
 }
 
 window.__appReady = true;
