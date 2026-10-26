@@ -582,17 +582,13 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
             <option value="45">45 detik</option><option value="60">60 detik</option>
           </select>
         </label>
-        
-        <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px;">
-          <label class="field" style="margin-top:0">Jumlah soal per sesi
-            <input id="set-per" type="number" min="1" step="1" value="10" inputmode="numeric">
-          </label>
-          <label class="field" style="margin-top:0">Jumlah sesi
-            <input id="set-sesi" type="number" min="1" step="1" value="" inputmode="numeric" placeholder="Otomatis">
-          </label>
-        </div>
-        <small class="muted" id="sess-info" style="display:block; margin-top: 8px;">Upload soal dulu untuk melihat pembagian sesi.</small>
-        
+        <label class="field">Jumlah soal per sesi
+          <input id="set-per" type="number" min="1" step="1" value="10" inputmode="numeric">
+        </label>
+        <label class="field">Jumlah sesi
+          <input id="set-sessions" type="number" min="1" step="1" value="3" inputmode="numeric">
+          <small class="muted" id="sess-info">Upload soal dulu untuk melihat pembagian sesi.</small>
+        </label>
         <fieldset class="rules">
           <legend>Tampilan balapan</legend>
           <div class="theme-pick wide" id="theme-pick"></div>
@@ -1123,35 +1119,17 @@ function applyParsed(text, src){
 }
 
 function perSesi(total){ const n = parseInt($('#set-per').value, 10); return Math.max(1, isNaN(n) ? (total || 10) : n); }
-
-function updateSessInfo(fromSesi = false) {
+function updateSessInfo(){
   const total = S.questions.filter(q => q.answer >= 0).length, el = $('#sess-info');
-  if(!total) { 
-    el.textContent = 'Upload soal dulu untuk melihat pembagian sesi.'; 
-    $('#set-sesi').value = ''; 
-    return; 
-  }
-  
-  if (fromSesi) {
-    // Jika host mengubah angka pada kotak "Jumlah sesi", hitung ulang jumlah soal per sesi
-    const sesi = Math.max(1, parseInt($('#set-sesi').value, 10) || 1);
-    $('#set-per').value = Math.ceil(total / sesi);
-  } else {
-    // Jika host mengubah angka pada kotak "Jumlah soal per sesi", hitung ulang jumlah sesi
-    const n = perSesi(total);
-    $('#set-sesi').value = Math.ceil(total / n);
-  }
-  
-  const finalPer = perSesi(total);
-  const finalSesi = Math.ceil(total / finalPer);
-  const sisa = total % finalPer;
-  
-  el.textContent = `Total ${total} soal. Dibagi menjadi ${finalSesi} sesi (setiap sesi ${finalPer} soal${sisa ? `, sesi terakhir ${sisa} soal` : ''}).`;
+  if(!total){ el.textContent = 'Upload soal dulu untuk melihat pembagian sesi.'; return; }
+  const n = perSesi(total), T = numSesi(), need = n * T;
+  el.textContent = `${T} sesi × ${n} soal = ${need} soal. Peringkat muncul dan terekap ke spreadsheet tiap akhir sesi. ` +
+    `Lomba selesai setelah sesi ke-${T}, atau lebih cepat kalau ada yang mencapai batas poin.` +
+    (need > total && !$('#set-repeat').checked ? ` ⚠ Soal hanya ${total}, centang "Ulangi soal" supaya semua sesi bisa dimainkan.` : '');
 }
-
-// Pasang pendeteksi perubahan pada kedua kolom input
-$('#set-per').addEventListener('input', () => updateSessInfo(false));
-$('#set-sesi').addEventListener('input', () => updateSessInfo(true));
+function numSesi(){ const v = parseInt($('#set-sessions').value, 10); return Math.max(1, isNaN(v) ? 1 : v); }
+['#set-per', '#set-sessions'].forEach(id => $(id).addEventListener('input', updateSessInfo));
+$('#set-repeat').addEventListener('change', updateSessInfo);
 
 function renderPreview(){
   $('#preview-card').hidden = !S.questions.length;
@@ -1164,7 +1142,7 @@ function renderPreview(){
       ${q.answer < 0 ? '<small class="warn">Belum ada kunci jawaban</small>' : ''}
     </li>`).join('');
   $('#btn-create-room').disabled = !S.questions.some(q => q.answer >= 0);
-  updateSessInfo(false);
+  updateSessInfo();
 }
 $('#q-list').addEventListener('click', e => {
   const o = e.target.closest('[data-o]');
@@ -1174,7 +1152,7 @@ $('#q-list').addEventListener('click', e => {
 });
 
 /* ======================= HOST: KODE & KUNCI SATU HOST ======================= */
-const LOCK_TTL = 120000, LOCK_BEAT = 20000;            // kunci kedaluwarsa 2 menit setelah host berhenti mengirim tanda aktif
+const LOCK_TTL = 120000, LOCK_BEAT = 20000;           // kunci kedaluwarsa 2 menit setelah host berhenti mengirim tanda aktif
 const lockRef = () => doc(db, 'rooms', '_hostlock');
 let hostSid = '';
 try{ hostSid = sessionStorage.getItem('balapHostSid') || ''; }catch{}
@@ -1242,7 +1220,7 @@ async function createRoom(){
   const btn = $('#btn-create-room'); btn.disabled = true; btn.textContent = 'Membuat ruangan…';
   try{
     S.game = valid.map(q => ({ text: q.text, options: [...q.options], answer: q.answer }));
-    S.per = perSesi(S.game.length); S.sessions = Math.ceil(S.game.length / S.per);
+    S.per = perSesi(S.game.length); S.sessions = numSesi();
     const num = (id, def) => { const v = parseInt($(id).value, 10); return isNaN(v) ? def : v; };
     S.ptsOk = num('#set-ok', 1000); S.ptsBad = num('#set-bad', -500); S.ptsNone = num('#set-none', -300);
     S.target = Math.max(1, num('#set-target', 40000)); S.repeat = $('#set-repeat').checked;
@@ -1396,7 +1374,7 @@ async function resolveQ(){
   // Tanpa pemberitahuan hasil: soal langsung pindah, siapa yang tercepat terlihat dari ulat yang bergerak.
   const winner = ranked().find(p => st(p.id).score >= S.target);
   if(winner){ phaseStart('result', 1500, () => finishGame('target')); return; }   // beri waktu ulat sampai di daun
-  if(H.sessPlayed >= S.per && (S.repeat || H.deck.length)) endSession();
+  if(H.sessPlayed >= S.per){ if(H.sess + 1 >= S.sessions) finishGame('sesi'); else endSession(); }
   else nextQuestion();
 }
 
@@ -1437,7 +1415,7 @@ function resultText(r, withName = true){
 
 function renderDash(){
   if(current !== 's-host-dash') return;
-  $('#dash-title').textContent = `Sesi ${H.sess + 1} · Soal ke-${H.qNo}`;
+  $('#dash-title').textContent = `Sesi ${H.sess + 1} dari ${S.sessions} · Soal ${H.sessPlayed + (H.resolved ? 0 : 1)}/${S.per}`;
   const q = S.game[H.qi];
   $('#dash-q').innerHTML = q ? `
     <p class="dq-text">${esc(q.text)}</p>
@@ -1482,7 +1460,7 @@ function renderLive(){
       <span class="who">${avatar(pc(p.id), 'sm')}<span><b>${esc(p.nama)}</b><small>${s.benar} benar · ${s.salah} salah</small></span></span>
       <span class="pt">${fmt(s.score)}</span></li>`;
   }).join('') + (order.length > 12 ? `<li class="muted">+${order.length - 12} lainnya</li>` : '') || '<li class="muted">Menunggu peserta…</li>';
-  $('#scr-title').textContent = `Balapan · Sesi ${H.sess + 1}`;
+  $('#scr-title').textContent = `Balapan · Sesi ${H.sess + 1}/${S.sessions}`;
   $('#scr-done').textContent = `Batas ${fmt(S.target)} poin`;
   const q = S.game[H.qi];
   $('#lq-no').textContent = H.qNo ? `Soal ke-${H.qNo}` : '';
@@ -1608,7 +1586,7 @@ async function endSession(){
   try{ await setDoc(roomRef(), { status: 'session', sesiNo: k + 1, paused: false }, { merge: true }); }catch{}
   if(H.paused) setPaused(false);
   $('#sess-title').textContent = `Peringkat Sesi ${k + 1}`;
-  $('#sess-sub').textContent = `${H.sessPlayed} soal dimainkan`;
+  $('#sess-sub').textContent = `${S.sessions - k - 1} sesi lagi`;
   $('#sess-podium').innerHTML = podiumHTML(rows.map(r => ({ id: r.id, nama: r.nama, pts: r.skor_sesi })));
   $('#sess-table').innerHTML = `<tr><th>#</th><th>Nama</th><th class="num">Benar</th><th class="num">Skor sesi</th><th class="num">Total</th></tr>` +
     (rows.length ? rows.map(r => `<tr><td>${r.peringkat}</td><td>${esc(r.nama)}</td><td class="num">${r.benar}</td><td class="num">${fmt(r.skor_sesi)}</td><td class="num">${fmt(r.total)}</td></tr>`).join('')
@@ -1630,7 +1608,7 @@ async function finishGame(reason){
   try{ await setDoc(roomRef(), { status: 'finished', paused: false, winner: top ? st(top.id).score >= S.target ? top.nama : null : null }, { merge: true }); }catch{}
   if(document.fullscreenElement) document.exitFullscreen().catch(() => {});
   $('#end-note').textContent = reason === 'target' && top ? `🏁 ${top.nama} mencapai ${fmt(S.target)} poin!`
-    : reason === 'habis' ? 'Semua soal sudah dimainkan.' : '';
+    : reason === 'sesi' ? `Semua ${S.sessions} sesi selesai.` : reason === 'habis' ? 'Semua soal sudah dimainkan.' : '';
   renderPodium(); show('s-host-end');
   if(!H.totalSent && H.started){
     H.totalSent = true;
@@ -1810,7 +1788,7 @@ function renderFeedback(){
   box.innerHTML = `<div class="big-icon">${medal}</div>${avatar(P.color, 'lg')}<p class="fb-title">Sesi ${d.sesiNo} selesai!</p>
     <div class="stat-row"><span class="stat">Peringkat sesi ${r} dari ${me.sesiJumlah}</span><span class="stat">${fmtP(me.sesiSkor)} poin sesi ini</span></div>
     <div class="stat-row"><span class="stat">Total ${fmtP(me.score)} poin</span><span class="stat">Peringkat total ${myRank()}</span></div>
-    <p class="muted">Sesi berikutnya dimulai saat host melanjutkan.</p>`;
+    <p class="muted">Sesi ${d.sesiNo + 1}${d.sesiTotal ? ` dari ${d.sesiTotal}` : ''} dimulai saat host melanjutkan.</p>`;
 }
 
 window.__appReady = true;
