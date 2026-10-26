@@ -310,8 +310,11 @@ td.num,th.num{text-align:right}
 .rank.bump{animation:pop .3s ease}
 .race-actions{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap}
 /* kontrol otomatis & jeda */
-.auto-status{font-weight:800;background:#fff;border:2px solid var(--ink);border-radius:999px;padding:8px 16px}
-.auto-status:empty{display:none}
+.auto-status,.sheet-status{font-weight:800;background:#fff;border:2px solid var(--ink);border-radius:999px;padding:8px 16px}
+.auto-status:empty,.sheet-status:empty{display:none}
+.field small{font-weight:700}
+.sess-chip{display:inline-block;background:var(--ink);color:var(--yellow);border-radius:999px;padding:2px 12px;font-size:.6em;vertical-align:middle;margin-right:8px}
+.table-wrap{overflow-x:auto}
 body.is-paused .btn-pause{background:var(--grass)}
 .pause-veil{position:fixed;inset:0;z-index:40;display:none;place-items:center;background:rgba(23,50,77,.35);pointer-events:none}
 body.is-paused .pause-veil{display:grid}
@@ -415,6 +418,10 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
             <option value="45">45 detik</option><option value="60">60 detik</option>
           </select>
         </label>
+        <label class="field">Jumlah soal per sesi
+          <input id="set-per" type="number" min="1" step="1" value="10" inputmode="numeric">
+          <small class="muted" id="sess-info">Upload soal dulu untuk melihat pembagian sesi.</small>
+        </label>
       </div>
 
       <div class="card" id="preview-card" hidden>
@@ -480,14 +487,22 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
     </div>
   </section>
 
+  <!-- ============ PERINGKAT SESI (HOST) ============ -->
+  <section id="s-host-session" class="screen">
+    <header class="bar"><button class="back" data-back>← Kembali</button><h2 id="sess-title">Peringkat Sesi</h2><span class="right muted" id="sess-sub"></span></header>
+    <div class="podium" id="sess-podium"></div>
+    <div class="card table-wrap"><table id="sess-table"></table></div>
+    <div class="race-actions"><span class="sheet-status" id="sess-sheet"></span><button class="cta" id="btn-next-session">▶ Lanjut</button></div>
+  </section>
+
   <!-- ============ JUARA (HOST) ============ -->
   <section id="s-host-end" class="screen">
     <header class="bar"><button class="back" data-back>⌂ Menu utama</button><h2>Juara Balapan</h2><span></span></header>
     <div class="podium" id="podium"></div>
-    <div class="card"><table id="final-table"></table></div>
+    <div class="card table-wrap"><table id="final-table"></table></div>
     <div class="end-actions">
       <button class="btn-sm yellow" id="btn-csv">⬇ Unduh nilai (CSV)</button>
-      <button class="btn-sm" id="btn-export-sheet">📊 Kirim ke spreadsheet</button>
+      <button class="btn-sm" id="btn-export-sheet">📊 Kirim ulang ke spreadsheet</button>
       <button class="btn-sm" id="btn-again">↻ Lomba lagi dengan soal yang sama</button>
     </div>
     <p class="muted" id="export-status" style="text-align:center"></p>
@@ -604,7 +619,7 @@ const firebaseConfig = {
   measurementId: "G-CLEP11LDMQ"
 };
 // --- GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA ---
-const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbylDJ5Ka5eGU_5Ze9PUIlzPsF-6cl2t2UNxijhVXAJ7XoVNwQEeDYQE18zcqvJlhxvN/exec";
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbzRB-R5UHYxdQ-AOqJmezfU6ejKexumn4l2fpR_T7p7VelKs-2IyRnYky7BE9O-2IzW/exec";
 
 const db = getFirestore(initializeApp(firebaseConfig));
 
@@ -671,6 +686,7 @@ $('#join-ulat').innerHTML = ulat('#7bd36b','lg');
 /* ---------- State ---------- */
 const S = { questions:[], game:[], time:20, title:'', pin:'', unsubs:[] };
 const H = { players:{}, qi:-1, answers:{}, revealed:false, showKey:true, timer:null, deadline:0, ansUnsub:null, prev:{},
+  sess:0, sessStart:{}, sessDone:new Set(), sessScores:{}, totalSent:false, sheetQ:Promise.resolve(),
   prevScore:{}, colorOf:{}, order:{}, nextColor:0, palette:shuffle([...PALETTE]), hueOff:0, race:[], raceAll:[], raf:0, raceTimers:[] };
 const colorFor = i => i < H.palette.length ? H.palette[i] : `hsl(${Math.round((H.hueOff + i * 137.508) % 360)} 72% 58%)`;
 const pc = id => H.colorOf[id] || H.players[id]?.color;
@@ -716,6 +732,8 @@ function handleBack(){
       if(confirm('Kembali dan akhiri lomba? Juara ditentukan dari nilai sampai soal terakhir yang sudah dinilai.\n\nPilih Batal untuk melanjutkan lomba.')) finishGame();
       else if(!was) setPaused(false);
       break; }
+    case 's-host-session':
+      if(confirm('Akhiri lomba sekarang dan tampilkan juara akhir?')) finishGame(); break;
     case 's-host-end':
       if(confirm('Kembali ke menu utama? Pastikan nilai sudah diunduh.')){ cleanup(); show('s-home'); } break;
     case 's-p-wait': case 's-p-play': case 's-p-feedback':
@@ -825,6 +843,16 @@ function applyParsed(text, src){
   setStatus('ok', `✓ ${qs.length} soal terbaca dari ${src}` + (noKey ? `. ${noKey} soal belum punya kunci, klik pilihan yang benar.` : '.'));
 }
 
+function perSesi(total){ const n = parseInt($('#set-per').value, 10); return Math.max(1, Math.min(total || 1, isNaN(n) ? total : n)); }
+function updateSessInfo(){
+  const total = S.questions.filter(q => q.answer >= 0).length, el = $('#sess-info');
+  if(!total){ el.textContent = 'Upload soal dulu untuk melihat pembagian sesi.'; return; }
+  const n = perSesi(total), T = Math.ceil(total / n), rest = total - (T - 1) * n;
+  el.textContent = T === 1 ? `${total} soal dimainkan dalam 1 sesi.`
+    : `${total} soal → ${T} sesi, ${n} soal per sesi${rest !== n ? ` (sesi terakhir ${rest} soal)` : ''}. Peringkat muncul tiap akhir sesi.`;
+}
+$('#set-per').addEventListener('input', updateSessInfo);
+
 function renderPreview(){
   $('#preview-card').hidden = !S.questions.length;
   $('#q-count').textContent = `(${S.questions.length} soal)`;
@@ -836,6 +864,7 @@ function renderPreview(){
       ${q.answer < 0 ? '<small class="warn">Belum ada kunci jawaban</small>' : ''}
     </li>`).join('');
   $('#btn-create-room').disabled = !S.questions.some(q => q.answer >= 0);
+  updateSessInfo();
 }
 $('#q-list').addEventListener('click', e => {
   const o = e.target.closest('[data-o]');
@@ -853,6 +882,7 @@ async function createRoom(){
   const btn = $('#btn-create-room'); btn.disabled = true; btn.textContent = 'Membuat ruangan…';
   try{
     S.game = valid.map(q => ({ text: q.text, options: [...q.options], answer: q.answer }));
+    S.per = perSesi(S.game.length); S.sessions = Math.ceil(S.game.length / S.per);
     S.time = +$('#set-time').value; S.title = $('#set-title').value.trim() || 'Balapan Ulat';
     let pin = '';
     for(let k = 0; k < 15; k++){
@@ -861,8 +891,9 @@ async function createRoom(){
     }
     S.pin = pin; document.body.classList.add('host-mode');
     // Hanya info umum yang disimpan di server. Kunci jawaban tetap di perangkat host.
-    await setDoc(roomRef(), { status: 'lobby', title: S.title, total: S.game.length, duration: S.time, qIndex: -1, createdAt: serverTimestamp() });
+    await setDoc(roomRef(), { status: 'lobby', title: S.title, sesiTotal: S.sessions, total: S.game.length, duration: S.time, qIndex: -1, createdAt: serverTimestamp() });
     H.players = {}; H.prev = {}; H.prevScore = {}; H.qi = -1;
+    H.sess = 0; H.sessStart = {}; H.sessDone = new Set(); H.sessScores = {}; H.totalSent = false;
     H.colorOf = {}; H.order = {}; H.nextColor = 0; H.palette = shuffle([...PALETTE]); H.hueOff = Math.random() * 360;
     S.unsubs.push(onSnapshot(collection(db, 'rooms', pin, 'players'), snap => {
       const p = {}; snap.forEach(d => p[d.id] = { id: d.id, ...d.data() });
@@ -929,7 +960,7 @@ function setAutoStatus(){
   if(H.paused) txt = '⏸ Lomba dijeda';
   else if(clock.name === 'question') txt = 'Jawaban tampil otomatis saat waktu habis';
   else if(clock.name === 'reveal') txt = `🐛 Balapan dimulai dalam ${s} dtk`;
-  else if(clock.name === 'afterRace') txt = last ? `🏆 Juara diumumkan dalam ${s} dtk` : `Soal berikutnya dalam ${s} dtk`;
+  else if(clock.name === 'afterRace') txt = last ? `🏆 Juara diumumkan dalam ${s} dtk` : isSessEnd(H.qi) ? `📊 Peringkat sesi ${sessOf(H.qi) + 1} dalam ${s} dtk` : `Soal berikutnya dalam ${s} dtk`;
   else if(current === 's-host-race') txt = '🏁 Balapan berlangsung';
   document.querySelectorAll('.auto-status').forEach(e => e.textContent = txt);
 }
@@ -946,12 +977,84 @@ function setPaused(v){
   setDoc(roomRef(), { paused: v, remaining, pauseSeq: H.pauseSeq }, { merge: true }).catch(() => {});
 }
 document.addEventListener('click', e => { if(e.target.closest('.btn-pause')) setPaused(!H.paused); });
+const sessOf = qi => Math.floor(qi / S.per);
+const sessLen = k => Math.min(S.per, S.game.length - k * S.per);
+function qLabel(short){
+  const k = sessOf(H.qi), no = H.qi - k * S.per + 1;
+  if(S.sessions <= 1) return short ? `Soal ${H.qi + 1}/${S.game.length}` : `${H.qi + 1} dari ${S.game.length}`;
+  return short ? `Sesi ${k + 1} · Soal ${no}/${sessLen(k)}` : `${no}/${sessLen(k)} · Sesi ${k + 1} dari ${S.sessions}`;
+}
+const isSessEnd = qi => (qi + 1) % S.per === 0 || qi + 1 >= S.game.length;
 function nextStep(){
   cancelRace(true);
-  if(H.qi + 1 >= S.game.length) finishGame(); else startQuestion(H.qi + 1);
+  if(H.qi + 1 >= S.game.length) finishGame();
+  else if(isSessEnd(H.qi)) endSession();
+  else startQuestion(H.qi + 1);
 }
 
+/* ---------- Sesi & rekap spreadsheet ---------- */
+function sessionRows(){
+  const rows = Object.values(H.players).map(p => {
+    const st = H.sessStart[p.id] || { score: 0, benar: 0 };
+    return { id: p.id, nama: p.nama, skor_sesi: (p.score || 0) - st.score, benar: (p.benar || 0) - st.benar, total: p.score || 0 };
+  }).sort((a, b) => b.skor_sesi - a.skor_sesi || b.total - a.total);
+  rows.forEach((r, i) => r.peringkat = i + 1);
+  return rows;
+}
+function sendSheet(sesi, rows){
+  if(GOOGLE_SHEETS_URL.startsWith('URL_')) return Promise.resolve(false);
+  const body = {
+    lomba: S.title, judul: `${S.title} - ${sesi}`, pin: S.pin, tanggal: new Date().toLocaleString('id-ID'), sesi,
+    peserta: rows.map(r => ({ peringkat: r.peringkat, nama: r.nama, benar: r.benar,
+      skor: r.skor_sesi ?? r.total, skor_sesi: r.skor_sesi ?? '', total: r.total }))
+  };
+  // dikirim berurutan supaya baris di spreadsheet tidak tercampur
+  const job = H.sheetQ.then(() => fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body) }))
+    .then(() => true, err => { toast('Gagal mengirim rekap ' + sesi + ' ke spreadsheet: ' + err.message); return false; });
+  H.sheetQ = job;
+  return job;
+}
+async function closeSession(){
+  const k = H.sess;
+  if(H.sessDone.has(k)) return null;
+  H.sessDone.add(k);
+  const rows = sessionRows();
+  rows.forEach(r => { (H.sessScores[r.id] ||= [])[k] = r.skor_sesi; });
+  const batch = writeBatch(db);
+  rows.forEach(r => batch.set(doc(db, 'rooms', S.pin, 'players', r.id),
+    { sesiNo: k + 1, sesiRank: r.peringkat, sesiSkor: r.skor_sesi, sesiBenar: r.benar, sesiJumlah: rows.length }, { merge: true }));
+  try{ await batch.commit(); }catch{}
+  H.lastSheet = sendSheet(`Sesi ${k + 1}`, rows);
+  return rows;
+}
+const podiumHTML = list => {
+  const step = (r, n) => r ? `<div class="step p${n}">${n === 1 ? '<span class="crown">👑</span>' : ''}${ulat(pc(r.id), n === 1 ? 'xl' : 'lg')}
+      <span class="nm">${esc(r.nama)}</span><span class="pts">${r.pts} poin</span><div class="blk">${n}</div></div>` : '<div></div>';
+  return step(list[1], 2) + step(list[0], 1) + step(list[2], 3);
+};
+async function endSession(){
+  cancelRace(true); phaseStop();
+  const k = H.sess, rows = await closeSession() || sessionRows();
+  try{ await setDoc(roomRef(), { status: 'session', sesiNo: k + 1, sesiTotal: S.sessions, paused: false }, { merge: true }); }catch{}
+  $('#sess-title').textContent = `Peringkat Sesi ${k + 1}`;
+  $('#sess-sub').textContent = `${S.sessions - k - 1} sesi lagi`;
+  $('#sess-podium').innerHTML = podiumHTML(rows.map(r => ({ id: r.id, nama: r.nama, pts: r.skor_sesi })));
+  $('#sess-table').innerHTML = `<tr><th>#</th><th>Nama</th><th class="num">Benar</th><th class="num">Skor sesi</th><th class="num">Total</th></tr>` +
+    (rows.length ? rows.map(r => `<tr><td>${r.peringkat}</td><td>${esc(r.nama)}</td><td class="num">${r.benar}/${sessLen(k)}</td><td class="num">${r.skor_sesi}</td><td class="num">${r.total}</td></tr>`).join('')
+      : '<tr><td colspan="5" class="muted">Tidak ada peserta.</td></tr>');
+  $('#btn-next-session').textContent = `▶ Lanjut ke sesi ${k + 2}`;
+  const st = $('#sess-sheet');
+  st.textContent = GOOGLE_SHEETS_URL.startsWith('URL_') ? '' : '📊 Mengirim rekap ke spreadsheet…';
+  show('s-host-session');
+  if(await H.lastSheet) st.textContent = `📊 Rekap sesi ${k + 1} terkirim ke spreadsheet`;
+}
+$('#btn-next-session').addEventListener('click', () => startQuestion(H.qi + 1));
+
 async function startQuestion(i){
+  if(i % S.per === 0){
+    H.sess = sessOf(i); H.sessStart = {};
+    Object.values(H.players).forEach(p => H.sessStart[p.id] = { score: p.score || 0, benar: p.benar || 0 });
+  }
   H.qi = i; H.revealed = false; H.answers = {};
   const q = S.game[i];
   try{
@@ -970,7 +1073,7 @@ async function startQuestion(i){
 
 function renderHostQ(){
   const q = S.game[H.qi], sec = $('#s-host-q');
-  $('#hq-num').textContent = `${H.qi + 1} dari ${S.game.length}`;
+  $('#hq-num').textContent = qLabel();
   $('#hq-text').textContent = q.text;
   $('#hq-opts').innerHTML = q.options.map((o, i) => `
     <div class="opt o${i} ${i === q.answer ? 'is-key' : ''}">
@@ -1055,7 +1158,7 @@ function showRace(){
     r.el = track.querySelector(`.lane[data-id="${r.id}"]`);
     r.runner = r.el.querySelector('.runner'); r.rankEl = r.el.querySelector('.rank'); r.scEl = r.el.querySelector('.sc');
   });
-  $('#race-progress').textContent = `Soal ${H.qi + 1}/${S.game.length}`;
+  $('#race-progress').textContent = qLabel(true);
   show('s-host-race');
   runRace();
 }
@@ -1144,18 +1247,27 @@ async function finishGame(){
   phaseStop();
   if(H.paused){ H.paused = false; document.body.classList.remove('is-paused'); document.querySelectorAll('.btn-pause').forEach(b => b.textContent = '⏸ Jeda'); }
   if(H.ansUnsub){ H.ansUnsub(); H.ansUnsub = null; }
+  // rekap sesi yang sedang berjalan (jika sudah ada soal yang dinilai), lalu rekap total
+  if(H.qi >= 0 && !H.sessDone.has(H.sess) && (H.revealed || H.qi > H.sess * S.per)) await closeSession();
   try{ await setDoc(roomRef(), { status: 'finished', paused: false }, { merge: true }); }catch{}
   renderPodium(); show('s-host-end');
+  if(!H.totalSent && H.qi >= 0){
+    H.totalSent = true;
+    const st = $('#export-status');
+    if(!GOOGLE_SHEETS_URL.startsWith('URL_')) st.textContent = '📊 Mengirim rekap ke spreadsheet…';
+    if(await sendSheet('Total', totalRows())) st.textContent = '📊 Rekap sesi dan total sudah terkirim ke spreadsheet.';
+  }
 }
 const ranking = () => Object.values(H.players).sort((a, b) => (b.score || 0) - (a.score || 0));
+const totalRows = () => ranking().map((p, i) => ({ id: p.id, peringkat: i + 1, nama: p.nama, benar: p.benar || 0, total: p.score || 0 }));
 function renderPodium(){
-  const list = ranking();
-  const step = (p, n) => p ? `<div class="step p${n}">${n === 1 ? '<span class="crown">👑</span>' : ''}${ulat(pc(p.id), n === 1 ? 'xl' : 'lg')}
-      <span class="nm">${esc(p.nama)}</span><span class="pts">${p.score || 0} poin</span><div class="blk">${n}</div></div>` : '<div></div>';
-  $('#podium').innerHTML = step(list[1], 2) + step(list[0], 1) + step(list[2], 3);
-  $('#final-table').innerHTML = `<tr><th>#</th><th>Nama</th><th class="num">Benar</th><th class="num">Skor</th></tr>` +
-    (list.length ? list.map((p, i) => `<tr><td>${i + 1}</td><td>${esc(p.nama)}</td><td class="num">${p.benar || 0}/${S.game.length}</td><td class="num">${p.score || 0}</td></tr>`).join('')
-      : '<tr><td colspan="4" class="muted">Tidak ada peserta.</td></tr>');
+  const list = totalRows(), multi = S.sessions > 1, nS = Math.min(S.sessions, H.sessDone.size || 1);
+  $('#podium').innerHTML = podiumHTML(list.map(r => ({ id: r.id, nama: r.nama, pts: r.total })));
+  const sHead = multi ? Array.from({ length: nS }, (_, k) => `<th class="num">Sesi ${k + 1}</th>`).join('') : '';
+  const sCells = id => multi ? Array.from({ length: nS }, (_, k) => `<td class="num">${H.sessScores[id]?.[k] ?? 0}</td>`).join('') : '';
+  $('#final-table').innerHTML = `<tr><th>#</th><th>Nama</th>${sHead}<th class="num">Benar</th><th class="num">Total</th></tr>` +
+    (list.length ? list.map(r => `<tr><td>${r.peringkat}</td><td>${esc(r.nama)}</td>${sCells(r.id)}<td class="num">${r.benar}/${S.game.length}</td><td class="num">${r.total}</td></tr>`).join('')
+      : `<tr><td colspan="${4 + (multi ? nS : 0)}" class="muted">Tidak ada peserta.</td></tr>`);
   $('#export-status').textContent = '';
   $('#btn-export-sheet').disabled = false;
 }
@@ -1167,19 +1279,17 @@ function download(name, content, type){
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 $('#btn-csv').addEventListener('click', () => {
-  const rows = [['Peringkat','Nama','Benar','Jumlah Soal','Skor']].concat(ranking().map((p, i) => [i + 1, p.nama, p.benar || 0, S.game.length, p.score || 0]));
+  const nS = S.sessions > 1 ? Math.max(1, H.sessDone.size) : 0;
+  const head = ['Peringkat', 'Nama', ...Array.from({ length: nS }, (_, k) => `Skor Sesi ${k + 1}`), 'Benar', 'Jumlah Soal', 'Total Skor'];
+  const rows = [head].concat(totalRows().map(r => [r.peringkat, r.nama, ...Array.from({ length: nS }, (_, k) => H.sessScores[r.id]?.[k] ?? 0), r.benar, S.game.length, r.total]));
   const csv = '\ufeff' + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
   download(`nilai-${S.title.replace(/\W+/g, '-')}-${S.pin}.csv`, csv, 'text/csv');
 });
 $('#btn-export-sheet').addEventListener('click', async () => {
   if(GOOGLE_SHEETS_URL.startsWith('URL_')){ toast('Isi dulu GOOGLE_SHEETS_URL di dalam kode.'); return; }
-  const payload = { judul: S.title, pin: S.pin, tanggal: new Date().toLocaleString('id-ID'),
-    peserta: ranking().map((p, i) => ({ peringkat: i + 1, nama: p.nama, benar: p.benar || 0, skor: p.score || 0 })) };
-  try{
-    await fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
-    $('#export-status').textContent = `Nilai ${payload.peserta.length} peserta terkirim ke spreadsheet.`;
-    $('#btn-export-sheet').disabled = true;
-  }catch(err){ toast('Gagal mengirim ke spreadsheet: ' + err.message); }
+  $('#btn-export-sheet').disabled = true;
+  if(await sendSheet('Total', totalRows())) $('#export-status').textContent = 'Rekap total dikirim ulang ke spreadsheet.';
+  $('#btn-export-sheet').disabled = false;
 });
 $('#btn-again').addEventListener('click', () => { cleanup(); S.pin = ''; show('s-host-setup'); });
 
@@ -1246,7 +1356,7 @@ function onRoom(d){
       if(!d.paused && typeof d.remaining === 'number') P.recv = performance.now() - ((d.duration || 15) * 1000 - d.remaining);
     }
   }
-  else if(d.status === 'reveal'){ clearInterval(P.timer); renderFeedback(); show('s-p-feedback'); }
+  else if(d.status === 'reveal' || d.status === 'session'){ clearInterval(P.timer); renderFeedback(); show('s-p-feedback'); }
   else if(d.status === 'finished'){ clearInterval(P.timer); renderEnd(); show('s-p-end'); }
 }
 
@@ -1303,6 +1413,16 @@ function renderFeedback(){
   const d = P.room, me = P.me; if(!d) return;
   $('#pf-name').textContent = P.name;
   const box = $('#pf-box');
+  if(d.status === 'session'){
+    if(!me || me.sesiNo !== d.sesiNo){ box.className = 'p-card'; box.innerHTML = `<div class="big-icon">⏳</div><p class="fb-title">Menghitung peringkat…</p>`; return; }
+    const r = me.sesiRank, medal = r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : '🏁';
+    box.className = 'p-card';
+    box.innerHTML = `<div class="big-icon">${medal}</div><p class="fb-title">Sesi ${d.sesiNo} selesai!</p>
+      <div class="stat-row"><span class="stat">Peringkat sesi ${r} dari ${me.sesiJumlah}</span><span class="stat">${me.sesiSkor} poin sesi ini</span></div>
+      <div class="stat-row"><span class="stat">Total ${me.score || 0} poin</span><span class="stat">Peringkat total ${myRank()}</span></div>
+      <p class="muted">Sesi ${d.sesiNo + 1} dari ${d.sesiTotal} dimulai saat host melanjutkan.</p>`;
+    return;
+  }
   if(!me || me.round !== d.qIndex){
     box.className = 'p-card'; box.innerHTML = `<div class="big-icon">⏳</div><p class="fb-title">Menghitung skor…</p>`; return;
   }
