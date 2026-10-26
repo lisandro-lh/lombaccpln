@@ -582,10 +582,17 @@ body.is-paused .ulat i,body.is-paused .ulat .head{animation-play-state:paused}
             <option value="45">45 detik</option><option value="60">60 detik</option>
           </select>
         </label>
-        <label class="field">Jumlah soal per sesi
-          <input id="set-per" type="number" min="1" step="1" value="10" inputmode="numeric">
-          <small class="muted" id="sess-info">Upload soal dulu untuk melihat pembagian sesi.</small>
-        </label>
+        
+        <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px;">
+          <label class="field" style="margin-top:0">Jumlah soal per sesi
+            <input id="set-per" type="number" min="1" step="1" value="10" inputmode="numeric">
+          </label>
+          <label class="field" style="margin-top:0">Jumlah sesi
+            <input id="set-sesi" type="number" min="1" step="1" value="" inputmode="numeric" placeholder="Otomatis">
+          </label>
+        </div>
+        <small class="muted" id="sess-info" style="display:block; margin-top: 8px;">Upload soal dulu untuk melihat pembagian sesi.</small>
+        
         <fieldset class="rules">
           <legend>Tampilan balapan</legend>
           <div class="theme-pick wide" id="theme-pick"></div>
@@ -1116,13 +1123,35 @@ function applyParsed(text, src){
 }
 
 function perSesi(total){ const n = parseInt($('#set-per').value, 10); return Math.max(1, isNaN(n) ? (total || 10) : n); }
-function updateSessInfo(){
+
+function updateSessInfo(fromSesi = false) {
   const total = S.questions.filter(q => q.answer >= 0).length, el = $('#sess-info');
-  if(!total){ el.textContent = 'Upload soal dulu untuk melihat pembagian sesi.'; return; }
-  const n = perSesi(total), T = Math.ceil(total / n), rest = total - (T - 1) * n;
-  el.textContent = `Peringkat sesi muncul dan terekap ke spreadsheet setiap ${n} soal (${total} soal tersedia).`;
+  if(!total) { 
+    el.textContent = 'Upload soal dulu untuk melihat pembagian sesi.'; 
+    $('#set-sesi').value = ''; 
+    return; 
+  }
+  
+  if (fromSesi) {
+    // Jika host mengubah angka pada kotak "Jumlah sesi", hitung ulang jumlah soal per sesi
+    const sesi = Math.max(1, parseInt($('#set-sesi').value, 10) || 1);
+    $('#set-per').value = Math.ceil(total / sesi);
+  } else {
+    // Jika host mengubah angka pada kotak "Jumlah soal per sesi", hitung ulang jumlah sesi
+    const n = perSesi(total);
+    $('#set-sesi').value = Math.ceil(total / n);
+  }
+  
+  const finalPer = perSesi(total);
+  const finalSesi = Math.ceil(total / finalPer);
+  const sisa = total % finalPer;
+  
+  el.textContent = `Total ${total} soal. Dibagi menjadi ${finalSesi} sesi (setiap sesi ${finalPer} soal${sisa ? `, sesi terakhir ${sisa} soal` : ''}).`;
 }
-$('#set-per').addEventListener('input', updateSessInfo);
+
+// Pasang pendeteksi perubahan pada kedua kolom input
+$('#set-per').addEventListener('input', () => updateSessInfo(false));
+$('#set-sesi').addEventListener('input', () => updateSessInfo(true));
 
 function renderPreview(){
   $('#preview-card').hidden = !S.questions.length;
@@ -1135,7 +1164,7 @@ function renderPreview(){
       ${q.answer < 0 ? '<small class="warn">Belum ada kunci jawaban</small>' : ''}
     </li>`).join('');
   $('#btn-create-room').disabled = !S.questions.some(q => q.answer >= 0);
-  updateSessInfo();
+  updateSessInfo(false);
 }
 $('#q-list').addEventListener('click', e => {
   const o = e.target.closest('[data-o]');
@@ -1145,7 +1174,7 @@ $('#q-list').addEventListener('click', e => {
 });
 
 /* ======================= HOST: KODE & KUNCI SATU HOST ======================= */
-const LOCK_TTL = 120000, LOCK_BEAT = 20000;           // kunci kedaluwarsa 2 menit setelah host berhenti mengirim tanda aktif
+const LOCK_TTL = 120000, LOCK_BEAT = 20000;            // kunci kedaluwarsa 2 menit setelah host berhenti mengirim tanda aktif
 const lockRef = () => doc(db, 'rooms', '_hostlock');
 let hostSid = '';
 try{ hostSid = sessionStorage.getItem('balapHostSid') || ''; }catch{}
